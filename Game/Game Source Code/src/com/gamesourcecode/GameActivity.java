@@ -16,7 +16,7 @@ public class GameActivity extends Activity {
 	
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-       game = new Game(this, this);
+        game = new Game(this, this);
         
         //Makes the game go fullscreen
         requestWindowFeature(Window.FEATURE_NO_TITLE);
