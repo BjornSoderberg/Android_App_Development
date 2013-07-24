@@ -1,4 +1,4 @@
-package com.gamesourcecode;
+package com.gamesourcecode.game;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,20 +9,20 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.os.SystemClock;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import com.gamesourcecode.button.Button;
-import com.gamesourcecode.button.LetterButton;
-import com.gamesourcecode.button.WordButton;
-import com.gamesourcecode.gfx.Image;
-import com.gamesourcecode.input.OnTouchHandler;
+import com.gamesourcecode.R;
+import com.gamesourcecode.game.button.Button;
+import com.gamesourcecode.game.button.LetterButton;
+import com.gamesourcecode.game.button.WordButton;
+import com.gamesourcecode.game.gfx.Image;
+import com.gamesourcecode.game.input.OnTouchHandler;
 
 public class Game extends SurfaceView implements Runnable {
 
-	private Bitmap bitmap;
 	private Bitmap alphabet;
+
 	private Thread thread;
 	private SurfaceHolder holder;
 	private Canvas screen;
@@ -36,19 +36,22 @@ public class Game extends SurfaceView implements Runnable {
 
 	private double currentTime = 0, totalTime = 20;
 
-	private String word = "sydney";
+	private String word;
 
 	private List<WordButton> wordButtons;
 	private List<LetterButton> letterButtons;
 
 	private boolean running = false;
+	private boolean guessedRight = false;
 
 	// Just for testing
 	int color = 255;
 
-	public Game(Context context, GameActivity activity) {
+	public Game(Context context, GameActivity activity, Bitmap[] bitmaps, String word) {
 		super(context);
 		this.activity = activity;
+		this.word = word;
+
 		holder = getHolder();
 
 		if (word.length() < 8) wordButtonSize = activity.getWidth() / 8;
@@ -59,12 +62,13 @@ public class Game extends SurfaceView implements Runnable {
 		}
 
 		// This is easier to see
-		Bitmap temp = BitmapFactory.decodeResource(getResources(), R.drawable.aaa22);
-		bitmap = temp.copy(Bitmap.Config.ARGB_8888, true);
+		// Bitmap temp = BitmapFactory.decodeResource(getResources(),
+		// R.drawable.aaa22);
+		// bitmap = temp.copy(Bitmap.Config.ARGB_8888, true);
 
 		alphabet = BitmapFactory.decodeResource(getResources(), R.drawable.alphabet);
 
-		image = new Image(bitmap, this);
+		image = new Image(this, bitmaps);
 		motion = new OnTouchHandler(this);
 		setOnTouchListener(motion);
 
@@ -75,7 +79,7 @@ public class Game extends SurfaceView implements Runnable {
 	public synchronized void start() {
 		running = true;
 
-		thread = new Thread(this, "Canvas");
+		thread = new Thread(this, "Game");
 		thread.start();
 	}
 
@@ -119,12 +123,12 @@ public class Game extends SurfaceView implements Runnable {
 
 	private void tick() {
 
-		image.tick();
 		for (Button b : getButtons()) {
 			b.tick();
 		}
 
-		if (currentTime >= totalTime) color = 0;
+		if (currentTime < totalTime) image.tick();
+		else if (!guessedRight) color = 0;
 
 		String string = "";
 		for (Button b : wordButtons) {
@@ -138,7 +142,9 @@ public class Game extends SurfaceView implements Runnable {
 			if (this.word.charAt(i) != ' ') word += this.word.charAt(i);
 		}
 
-		if (string.equalsIgnoreCase(word)) color = 130;
+		if (string.equalsIgnoreCase(word)) {
+			guessedRight = true;
+		}
 	}
 
 	private void render() {
@@ -200,37 +206,37 @@ public class Game extends SurfaceView implements Runnable {
 	}
 
 	public Bitmap getAlphabetBitmap(char c, int width, int height) {
-		int s = 42;
-		
-		Bitmap bitmap = Bitmap.createBitmap(alphabet, 2*s, 4*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		int s = alphabet.getWidth() / 6 - 1;
+
+		Bitmap bitmap = Bitmap.createBitmap(alphabet, 2 * s, 4 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
 
 		if (c == 'a') bitmap = Bitmap.createBitmap(alphabet, 0, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
 		if (c == 'b') bitmap = Bitmap.createBitmap(alphabet, s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'c') bitmap = Bitmap.createBitmap(alphabet, 2*s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'd') bitmap = Bitmap.createBitmap(alphabet, 3*s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'e') bitmap = Bitmap.createBitmap(alphabet, 4*s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'f') bitmap = Bitmap.createBitmap(alphabet, 5*s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'c') bitmap = Bitmap.createBitmap(alphabet, 2 * s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'd') bitmap = Bitmap.createBitmap(alphabet, 3 * s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'e') bitmap = Bitmap.createBitmap(alphabet, 4 * s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'f') bitmap = Bitmap.createBitmap(alphabet, 5 * s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
 		if (c == 'g') bitmap = Bitmap.createBitmap(alphabet, 0, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
 		if (c == 'h') bitmap = Bitmap.createBitmap(alphabet, s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'i') bitmap = Bitmap.createBitmap(alphabet, 2*s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'j') bitmap = Bitmap.createBitmap(alphabet, 3*s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'k') bitmap = Bitmap.createBitmap(alphabet, 4*s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'l') bitmap = Bitmap.createBitmap(alphabet, 5*s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'm') bitmap = Bitmap.createBitmap(alphabet, 0, 2*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'n') bitmap = Bitmap.createBitmap(alphabet, s, 2*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'o') bitmap = Bitmap.createBitmap(alphabet, 2*s, 2*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'p') bitmap = Bitmap.createBitmap(alphabet, 3*s, 2*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'q') bitmap = Bitmap.createBitmap(alphabet, 4*s, 2*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'r') bitmap = Bitmap.createBitmap(alphabet, 5*s, 2*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 's') bitmap = Bitmap.createBitmap(alphabet, 0, 3*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 't') bitmap = Bitmap.createBitmap(alphabet, s, 3*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'u') bitmap = Bitmap.createBitmap(alphabet, 2*s, 3*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'v') bitmap = Bitmap.createBitmap(alphabet, 3*s, 3*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'w') bitmap = Bitmap.createBitmap(alphabet, 4*s, 3*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'x') bitmap = Bitmap.createBitmap(alphabet, 5*s, 3*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'y') bitmap = Bitmap.createBitmap(alphabet, 0, 4*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'z') bitmap = Bitmap.createBitmap(alphabet, s, 5*s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		
+		if (c == 'i') bitmap = Bitmap.createBitmap(alphabet, 2 * s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'j') bitmap = Bitmap.createBitmap(alphabet, 3 * s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'k') bitmap = Bitmap.createBitmap(alphabet, 4 * s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'l') bitmap = Bitmap.createBitmap(alphabet, 5 * s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'm') bitmap = Bitmap.createBitmap(alphabet, 0, 2 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'n') bitmap = Bitmap.createBitmap(alphabet, s, 2 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'o') bitmap = Bitmap.createBitmap(alphabet, 2 * s, 2 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'p') bitmap = Bitmap.createBitmap(alphabet, 3 * s, 2 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'q') bitmap = Bitmap.createBitmap(alphabet, 4 * s, 2 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'r') bitmap = Bitmap.createBitmap(alphabet, 5 * s, 2 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 's') bitmap = Bitmap.createBitmap(alphabet, 0, 3 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 't') bitmap = Bitmap.createBitmap(alphabet, s, 3 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'u') bitmap = Bitmap.createBitmap(alphabet, 2 * s, 3 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'v') bitmap = Bitmap.createBitmap(alphabet, 3 * s, 3 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'w') bitmap = Bitmap.createBitmap(alphabet, 4 * s, 3 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'x') bitmap = Bitmap.createBitmap(alphabet, 5 * s, 3 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'y') bitmap = Bitmap.createBitmap(alphabet, 0, 4 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'z') bitmap = Bitmap.createBitmap(alphabet, s, 4 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+
 		bitmap = Bitmap.createScaledBitmap(bitmap, width - 1, height - 1, true);
 		return bitmap;
 	}
@@ -326,5 +332,9 @@ public class Game extends SurfaceView implements Runnable {
 
 	public List<LetterButton> getLetterButtons() {
 		return letterButtons;
+	}
+
+	public boolean hasGuessedRight() {
+		return guessedRight;
 	}
 }

@@ -1,10 +1,10 @@
-package com.gamesourcecode.button;
+package com.gamesourcecode.game.button;
 
 import android.graphics.BitmapFactory;
 import android.util.Log;
 
-import com.gamesourcecode.Game;
 import com.gamesourcecode.R;
+import com.gamesourcecode.game.Game;
 
 public class WordButton extends Button {
 

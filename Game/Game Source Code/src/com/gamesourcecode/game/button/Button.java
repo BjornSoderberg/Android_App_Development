@@ -1,12 +1,12 @@
-package com.gamesourcecode.button;
+package com.gamesourcecode.game.button;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 
-import com.gamesourcecode.Game;
 import com.gamesourcecode.R;
+import com.gamesourcecode.game.Game;
 
 public class Button {
 

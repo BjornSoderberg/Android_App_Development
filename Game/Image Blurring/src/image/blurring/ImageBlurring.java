@@ -23,6 +23,8 @@ public class ImageBlurring extends Canvas {
 	private int radius = 1;
 	private int iterations = 0;
 	private int index = 0;
+	
+	private boolean running = false;
 
 	private BufferedImage image, tempImg;
 	private int width = 0, height = 0, divide = 0, desiredWidth = 0, desiredHeight = 0;
@@ -37,7 +39,7 @@ public class ImageBlurring extends Canvas {
 		initFrame();
 
 		try {
-			path = "C:\\Users\\user\\Desktop";
+			path = "C:\\Users\\user\\Desktop\\images";
 			File folder = new File(path);
 
 			for (File fileEntry : folder.listFiles()) {
@@ -55,14 +57,12 @@ public class ImageBlurring extends Canvas {
 					width = desiredWidth;
 					height = desiredHeight;
 
-					break;
+					start();
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		start();
 	}
 
 	private BufferedImage getScaledImage(Image srcImg, int w, int h) {
@@ -82,6 +82,8 @@ public class ImageBlurring extends Canvas {
 	private void start() {
 		initArrays();
 		iterations = index = 0;
+		
+		running = true;
 
 		setPreferredSize(new Dimension(width, height));
 		setMaximumSize(new Dimension(width, height));
@@ -94,7 +96,7 @@ public class ImageBlurring extends Canvas {
 
 	private void run() {
 		render();
-		while (true) {
+		while (running) {
 			try {
 				Thread.sleep(2);
 			} catch (InterruptedException e) {
@@ -109,12 +111,10 @@ public class ImageBlurring extends Canvas {
 			if (iterations == 1 || iterations == 2 || iterations == 4 || iterations == 7 || iterations == 12 || iterations == 20 || iterations == 30 || iterations == 40 || iterations == 50 || iterations == 65 || iterations == 80 || iterations == 100 || iterations == 140 || iterations == 180 || iterations == 250 || iterations == 350 || iterations == 500 || iterations == 700 || iterations == 900 || iterations == 1100 || iterations == 1400 || iterations == 1900 || iterations == 2500 || iterations == 3000) {
 				System.out.println("Saving image\t" + iterations);
 				save();
-
-//				try {
-//					Thread.sleep(1000);
-//				} catch (InterruptedException e) {
-//					e.printStackTrace();
-//				}
+			}
+			
+			if(iterations == 3000) {
+				running = false;
 			}
 
 			blurImage();
@@ -252,7 +252,7 @@ public class ImageBlurring extends Canvas {
 	private void save() {
 
 		String ext = "jpg";
-		File file = new File(path + "\\\\test\\\\" + removeExtension(fileName) + index + "." + ext);
+		File file = new File("C:\\xampp\\htdocs\\android\\images\\" + removeExtension(fileName) + index + "." + ext);
 		try {
 			ImageIO.write(image, ext, file);
 		} catch (IOException e) {

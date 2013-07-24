@@ -1,12 +1,12 @@
-package com.gamesourcecode.input;
+package com.gamesourcecode.game.input;
 
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 
-import com.gamesourcecode.Game;
-import com.gamesourcecode.button.Button;
-import com.gamesourcecode.button.LetterButton;
+import com.gamesourcecode.game.Game;
+import com.gamesourcecode.game.button.Button;
+import com.gamesourcecode.game.button.LetterButton;
 
 public class OnTouchHandler implements OnTouchListener {
 

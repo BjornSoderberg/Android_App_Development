@@ -1,4 +1,4 @@
-package com.gamesourcecode.gfx;
+package com.gamesourcecode.game.gfx;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
