@@ -8,24 +8,25 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.os.SystemClock;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import com.gamesourcecode.R;
-import com.gamesourcecode.game.button.Button;
-import com.gamesourcecode.game.button.LetterButton;
-import com.gamesourcecode.game.button.WordButton;
+import com.gamesourcecode.button.Button;
+import com.gamesourcecode.button.game.GameButton;
+import com.gamesourcecode.button.game.LetterButton;
+import com.gamesourcecode.button.game.WordButton;
 import com.gamesourcecode.game.gfx.Image;
 import com.gamesourcecode.game.input.OnTouchHandler;
 
 public class Game extends SurfaceView implements Runnable {
 
-	private Bitmap alphabet;
-
 	private Thread thread;
 	private SurfaceHolder holder;
 	private Canvas screen;
+	private final Random random = new Random();
 
 	private Image image;
 	private OnTouchHandler motion;
@@ -60,13 +61,6 @@ public class Game extends SurfaceView implements Runnable {
 		if (word.length() > letterButtonCols * letterButtonRows) {
 			letterButtonCols = (word.length() + 1) / letterButtonRows;
 		}
-
-		// This is easier to see
-		// Bitmap temp = BitmapFactory.decodeResource(getResources(),
-		// R.drawable.aaa22);
-		// bitmap = temp.copy(Bitmap.Config.ARGB_8888, true);
-
-		alphabet = BitmapFactory.decodeResource(getResources(), R.drawable.alphabet);
 
 		image = new Image(this, bitmaps);
 		motion = new OnTouchHandler(this);
@@ -131,7 +125,7 @@ public class Game extends SurfaceView implements Runnable {
 		else if (!guessedRight) color = 0;
 
 		String string = "";
-		for (Button b : wordButtons) {
+		for (GameButton b : wordButtons) {
 			if (!b.containsLetter()) return;
 			string += b.getChar();
 		}
@@ -155,12 +149,17 @@ public class Game extends SurfaceView implements Runnable {
 
 		image.render(screen);
 
-		for (Button b : letterButtons) {
-			b.render(screen);
+		Paint alpha = new Paint();
+		alpha.setAlpha(180);
+		
+		// Renders the grabbed button last (so that it will be over the other buttons)
+		for (GameButton b : getButtons()) {
+			if (!b.isGrabbed() || !b.containsLetter()) b.render(screen, null);
+
 		}
 
-		for (Button b : wordButtons) {
-			b.render(screen);
+		for (GameButton b : getButtons()) {
+			if (b.isGrabbed() && b.containsLetter()) b.render(screen, alpha);
 		}
 
 		holder.unlockCanvasAndPost(screen);
@@ -181,7 +180,8 @@ public class Game extends SurfaceView implements Runnable {
 			for (int x = 0; x < letterButtonCols; x++) {
 				xOffset = x * width;
 				char c = chars[x + y * letterButtonCols];
-				letterButtons.add(new LetterButton(xOffset, yOffset, width, height, this, c));
+				Bitmap bitmap = getAlphabetBitmap(c, width, height);
+				letterButtons.add(new LetterButton(xOffset, yOffset, width, height, this, bitmap, c));
 
 			}
 		}
@@ -199,54 +199,51 @@ public class Game extends SurfaceView implements Runnable {
 		xOffset = (activity.getWidth() - word.length() * width) / 2;
 
 		for (int i = 0; i < word.length(); i++) {
-			if (word.charAt(i) != ' ') wordButtons.add(new WordButton(xOffset, yOffset, width, height, this));
+			Bitmap bitmap = getAlphabetBitmap(' ', width, height);
+			if (word.charAt(i) != ' ') wordButtons.add(new WordButton(xOffset, yOffset, width, height, this, bitmap));
 			xOffset += width;
 		}
 
 	}
 
 	public Bitmap getAlphabetBitmap(char c, int width, int height) {
-		int s = alphabet.getWidth() / 6 - 1;
+		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.empty);
 
-		Bitmap bitmap = Bitmap.createBitmap(alphabet, 2 * s, 4 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
+		if (c == 'a') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.a);
+		if (c == 'b') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.b);
+		if (c == 'c') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.c);
+		if (c == 'd') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.d);
+		if (c == 'e') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.e);
+		if (c == 'f') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.f);
+		if (c == 'g') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.g);
+		if (c == 'h') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.h);
+		if (c == 'i') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.i);
+		if (c == 'j') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.j);
+		if (c == 'k') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.k);
+		if (c == 'l') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.l);
+		if (c == 'm') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.m);
+		if (c == 'n') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.n);
+		if (c == 'o') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.o);
+		if (c == 'p') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.p);
+		if (c == 'q') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.q);
+		if (c == 'r') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.r);
+		if (c == 's') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.s);
+		if (c == 't') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.t);
+		if (c == 'u') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.u);
+		if (c == 'v') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.v);
+		if (c == 'w') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.w);
+		if (c == 'x') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.x);
+		if (c == 'y') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.y);
+		if (c == 'z') bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.z);
 
-		if (c == 'a') bitmap = Bitmap.createBitmap(alphabet, 0, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'b') bitmap = Bitmap.createBitmap(alphabet, s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'c') bitmap = Bitmap.createBitmap(alphabet, 2 * s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'd') bitmap = Bitmap.createBitmap(alphabet, 3 * s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'e') bitmap = Bitmap.createBitmap(alphabet, 4 * s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'f') bitmap = Bitmap.createBitmap(alphabet, 5 * s, 0, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'g') bitmap = Bitmap.createBitmap(alphabet, 0, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'h') bitmap = Bitmap.createBitmap(alphabet, s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'i') bitmap = Bitmap.createBitmap(alphabet, 2 * s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'j') bitmap = Bitmap.createBitmap(alphabet, 3 * s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'k') bitmap = Bitmap.createBitmap(alphabet, 4 * s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'l') bitmap = Bitmap.createBitmap(alphabet, 5 * s, s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'm') bitmap = Bitmap.createBitmap(alphabet, 0, 2 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'n') bitmap = Bitmap.createBitmap(alphabet, s, 2 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'o') bitmap = Bitmap.createBitmap(alphabet, 2 * s, 2 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'p') bitmap = Bitmap.createBitmap(alphabet, 3 * s, 2 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'q') bitmap = Bitmap.createBitmap(alphabet, 4 * s, 2 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'r') bitmap = Bitmap.createBitmap(alphabet, 5 * s, 2 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 's') bitmap = Bitmap.createBitmap(alphabet, 0, 3 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 't') bitmap = Bitmap.createBitmap(alphabet, s, 3 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'u') bitmap = Bitmap.createBitmap(alphabet, 2 * s, 3 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'v') bitmap = Bitmap.createBitmap(alphabet, 3 * s, 3 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'w') bitmap = Bitmap.createBitmap(alphabet, 4 * s, 3 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'x') bitmap = Bitmap.createBitmap(alphabet, 5 * s, 3 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'y') bitmap = Bitmap.createBitmap(alphabet, 0, 4 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-		if (c == 'z') bitmap = Bitmap.createBitmap(alphabet, s, 4 * s, s, s).copy(Bitmap.Config.ARGB_8888, true);
-
-		bitmap = Bitmap.createScaledBitmap(bitmap, width - 1, height - 1, true);
+		bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
 		return bitmap;
 	}
 
 	private char[] generateLetterButtonChars(char[] chars) {
 
-		Random random = new Random();
-
 		for (int i = 0; i < chars.length; i++) {
-			chars[i] = '?';
+			chars[i] = ' ';
 			if (i < word.length() && word.charAt(i) != ' ') {
 				chars[i] = word.charAt(i);
 			} else {
@@ -282,6 +279,13 @@ public class Game extends SurfaceView implements Runnable {
 
 		// Randomizes the order of the array
 		// Returns the temp array
+		
+		return scrambleCharArray(chars);
+		
+	}
+	
+	private char[] scrambleCharArray(char[] chars) {
+		
 		char[] temp = new char[chars.length];
 		boolean[] bool = new boolean[chars.length];
 		for (int i = 0; i < bool.length; i++) {
@@ -310,20 +314,24 @@ public class Game extends SurfaceView implements Runnable {
 		return currentTime;
 	}
 
-	public Button[] getButtons() {
-		Button[] b = new Button[wordButtons.size() + letterButtons.size()];
+	public GameButton[] getButtons() {
+		GameButton[] b = new GameButton[wordButtons.size() + letterButtons.size()];
 		int i = 0;
-		for (Button bb : wordButtons) {
+		for (GameButton bb : wordButtons) {
 			b[i] = bb;
 			i++;
 		}
 
-		for (Button bb : letterButtons) {
+		for (GameButton bb : letterButtons) {
 			b[i] = bb;
 			i++;
 		}
 
 		return b;
+	}
+
+	public Bitmap getEmptyBitmap(int width, int height) {
+		return getAlphabetBitmap(' ', width, height);
 	}
 
 	public List<WordButton> getWordButtons() {

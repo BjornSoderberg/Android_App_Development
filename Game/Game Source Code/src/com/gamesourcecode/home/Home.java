@@ -1,23 +1,32 @@
 package com.gamesourcecode.home;
 
-import android.app.Activity;
+import java.util.ArrayList;
+import java.util.List;
+
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.os.SystemClock;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.View.OnTouchListener;
 
+import com.gamesourcecode.R;
+import com.gamesourcecode.button.Button;
 import com.gamesourcecode.game.GameActivity;
+import com.gamesourcecode.home.input.OnTouchHandler;
 
-public class Home extends SurfaceView implements Runnable, OnTouchListener {
+public class Home extends SurfaceView implements Runnable {
 
 	private SurfaceHolder holder;
 	private Thread thread;
 	private Canvas screen;
+	private OnTouchHandler motion;
+	
+	private List<Button> buttons;
 
 	private HomeActivity activity;
 
@@ -27,8 +36,12 @@ public class Home extends SurfaceView implements Runnable, OnTouchListener {
 		super(context);
 		this.activity = activity;
 		holder = getHolder();
-
-		setOnTouchListener(this);
+		
+		motion = new OnTouchHandler(this);
+		setOnTouchListener(motion);
+		
+		initButtons();
+		
 		start();
 	}
 
@@ -84,7 +97,12 @@ public class Home extends SurfaceView implements Runnable, OnTouchListener {
 		if (!holder.getSurface().isValid()) return;
 
 		screen = holder.lockCanvas();
-		screen.drawRGB(200, 200, 100);
+		
+		screen.drawRGB(255, 255, 255);
+		
+		for(Button b : buttons) {
+			b.render(screen, null);
+		}
 
 		holder.unlockCanvasAndPost(screen);
 	}
@@ -96,6 +114,22 @@ public class Home extends SurfaceView implements Runnable, OnTouchListener {
 
 		return false;
 	}
+	
+	private void initButtons() {
+		buttons = new ArrayList<Button>();
+		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.startgame);
+		
+		int width = (int)(activity.getWidth() * 0.8);
+		int height = width * bitmap.getHeight() / bitmap.getWidth();
+		
+		Button start = new Button((activity.getWidth() - width) / 2, (activity.getHeight() - height) / 2, width, height, bitmap) {
+			public void onClick() {
+				startGame();
+			}
+		};
+		
+		buttons.add(start);
+	}
 
 	private void startGame() {
 
@@ -105,5 +139,9 @@ public class Home extends SurfaceView implements Runnable, OnTouchListener {
 		activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
 		
 		running = false;
+	}
+	
+	public List<Button> getButtons() {
+		return buttons;
 	}
 }

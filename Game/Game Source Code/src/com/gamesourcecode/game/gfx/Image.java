@@ -44,7 +44,7 @@ public class Image {
 	private void tickImage() {
 		if (index == (int) (24 - (game.getTime() / game.getTotalTime() * 24))) return;
 		index = (int) (24 - (game.getTime() / game.getTotalTime() * 24));
-		if (index > 22) index = 23;
+		if (index > 23) index = 23;
 		bitmap = getBitmap(index + 1);
 		bitmap2 = getBitmap(index);
 	}

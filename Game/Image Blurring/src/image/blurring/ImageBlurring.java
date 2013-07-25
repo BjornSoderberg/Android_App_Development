@@ -12,6 +12,14 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
@@ -31,6 +39,7 @@ public class ImageBlurring extends Canvas {
 
 	private String fileName;
 	private String path;
+	private String link;
 
 	private double[] red, green, blue, r, g, b;
 	private int[] pixels;
@@ -63,6 +72,8 @@ public class ImageBlurring extends Canvas {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		System.exit(0);
 	}
 
 	private BufferedImage getScaledImage(Image srcImg, int w, int h) {
@@ -80,6 +91,8 @@ public class ImageBlurring extends Canvas {
 	}
 
 	private void start() {
+		createMySQLColumn();
+		
 		initArrays();
 		iterations = index = 0;
 		
@@ -103,8 +116,6 @@ public class ImageBlurring extends Canvas {
 				e.printStackTrace();
 			}
 			render();
-
-			System.out.println(iterations);
 
 			iterations++;
 
@@ -252,7 +263,7 @@ public class ImageBlurring extends Canvas {
 	private void save() {
 
 		String ext = "jpg";
-		File file = new File("C:\\xampp\\htdocs\\android\\images\\" + removeExtension(fileName) + index + "." + ext);
+		File file = new File("C:\\xampp\\htdocs\\android\\images\\" + link + index + "." + ext);
 		try {
 			ImageIO.write(image, ext, file);
 		} catch (IOException e) {
@@ -272,8 +283,51 @@ public class ImageBlurring extends Canvas {
 
 		return sub;
 	}
+	
+	private void createMySQLColumn() {
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+			Connection connection = DriverManager.getConnection("jdbc:mysql://localhost/android", "root", "david");
+			
+			Statement statement = connection.createStatement();
+			
+			try {
+				generateRandomLink();
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			}
+			
+			statement.executeUpdate("INSERT INTO images ( name, link ) VALUES ( '" + removeExtension(fileName) + "', '" + link + "' )");
+			
+			connection.close();
+			
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();}
+	}
+	
+	private void generateRandomLink() throws UnsupportedEncodingException, NoSuchAlgorithmException {
+		MessageDigest md = MessageDigest.getInstance("MD5");
+		Random random = new Random();
+		
+		String string = fileName + random.nextInt(1000);
+		byte[] hash = md.digest(string.getBytes("UTF-8"));
+		
+		StringBuilder sb = new StringBuilder(2 * hash.length);
+		for(byte b : hash) {
+			sb.append(String.format("%02x", b&0xff));
+		}
+		
+		link = sb.toString();
+		System.out.println(link);
+	}
 
 	public static void main(String[] args) {
 		new ImageBlurring();
 	}
+	
 }

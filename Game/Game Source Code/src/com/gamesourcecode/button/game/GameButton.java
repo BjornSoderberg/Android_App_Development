@@ -1,39 +1,33 @@
-package com.gamesourcecode.game.button;
+package com.gamesourcecode.button.game;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
 
-import com.gamesourcecode.R;
+import com.gamesourcecode.button.Button;
 import com.gamesourcecode.game.Game;
 
-public class Button {
+public class GameButton extends Button {
 
 	protected Game game;
-	protected int xOriginal, yOriginal, x, y, width = 0, height = 0;
-	protected Bitmap bitmap;
+	protected Bitmap originalBitmap;
+	protected int xOrigin, yOrigin;
+
 	protected boolean containsLetter;
+	protected boolean grabbed;
+	protected boolean hasBeenOutside = false;
+
 	protected char c;
 
-	protected boolean grabbed;
-
-	public Button(int x, int y, int width, int height, Game game) {
-		xOriginal = x;
-		yOriginal = y;
-		this.x = x;
-		this.y = y;
-		this.width = width;
-		this.height = height;
+	public GameButton(int x, int y, int width, int height, Game game, Bitmap bitmap) {
+		super(x, y, width, height, bitmap);
+		xOrigin = x;
+		yOrigin = y;
+		originalBitmap = bitmap;
 		this.game = game;
 
 		grabbed = false;
-
-		setOriginalBitmap(width, height);
-	}
-
-	public void render(Canvas screen) {
-		screen.drawBitmap(bitmap, x, y, null);
 	}
 
 	public void onClick() {
@@ -50,10 +44,6 @@ public class Button {
 
 	public int getX() {
 		return x;
-	}
-
-	public int getOriginalX() {
-		return xOriginal;
 	}
 
 	public int getY() {
@@ -78,8 +68,8 @@ public class Button {
 		return r;
 	}
 
-	public Rect getOriginalRect() {
-		Rect r = new Rect(xOriginal, yOriginal, xOriginal + width, yOriginal + height);
+	public Rect getOriginRect() {
+		Rect r = new Rect(xOrigin, yOrigin, xOrigin + width, yOrigin + height);
 		return r;
 	}
 
@@ -88,15 +78,14 @@ public class Button {
 		return r;
 	}
 
-	protected void setOriginalBitmap(int width, int height) {
-		bitmap = BitmapFactory.decodeResource(game.getResources(), R.drawable.androidlogo);
-		bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
-	}
-
-	public void setLetter(char c) {
+	public void setChar(char c) {
 		containsLetter = true;
 		this.c = c;
 		bitmap = game.getAlphabetBitmap(c, width, height);
+	}
+
+	public char getChar() {
+		return c;
 	}
 
 	public void grabbed() {
@@ -104,16 +93,20 @@ public class Button {
 	}
 
 	public void released() {
-		grabbed = false;
-		x = xOriginal;
-		y = yOriginal;
+		grabbed = hasBeenOutside = false;
+		x = xOrigin;
+		y = yOrigin;
 	}
 
 	public boolean isGrabbed() {
 		return grabbed;
 	}
 
-	public char getChar() {
-		return c;
+	public void outside() {
+		hasBeenOutside = true;
+	}
+
+	public boolean hasBeenOutside() {
+		return hasBeenOutside;
 	}
 }

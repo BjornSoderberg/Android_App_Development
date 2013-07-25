@@ -3,6 +3,7 @@ package com.gamesourcecode.home;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -20,5 +21,17 @@ public class HomeActivity extends Activity {
 		Home home = new Home(this, this);
 
 		setContentView(home);
+	}
+	
+	public int getWidth() {
+		DisplayMetrics dm = new DisplayMetrics();
+		getWindowManager().getDefaultDisplay().getMetrics(dm);
+		return dm.widthPixels;
+	}
+
+	public int getHeight() {
+		DisplayMetrics dm = new DisplayMetrics();
+		getWindowManager().getDefaultDisplay().getMetrics(dm);
+		return dm.heightPixels;
 	}
 }

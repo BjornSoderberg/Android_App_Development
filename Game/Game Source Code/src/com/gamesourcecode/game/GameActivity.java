@@ -26,11 +26,9 @@ import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 
-import com.gamesourcecode.misc.JSONParser;
-
 public class GameActivity extends Activity {
 
-	private String word = "";
+	private String word = "", link = "";
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -71,16 +69,16 @@ public class GameActivity extends Activity {
 	private class LoadBitmaps extends AsyncTask<GameActivity, Integer, Bitmap[]> {
 
 		private GameActivity activity;
-		private JSONParser jsonParser = new JSONParser();
 
 		protected void onPreExecute() {
 			super.onPreExecute();
 		}
 
 		protected Bitmap[] doInBackground(GameActivity... params) {
-			activity = params[0];
 
-			word = getWord();
+			initWordAndLink();
+			
+			activity = params[0];
 
 			Bitmap[] bitmaps = new Bitmap[24];
 
@@ -101,7 +99,7 @@ public class GameActivity extends Activity {
 		}
 
 		private Bitmap getBitmap(int i) {
-			String url = "http://192.168.60.49/android/images/" + word + i + ".jpg";
+			String url = "http://192.168.60.49/android/images/" + link + i + ".jpg";
 
 			try {
 				InputStream in = new java.net.URL(url).openStream();
@@ -117,9 +115,9 @@ public class GameActivity extends Activity {
 			return null;
 		}
 
-		String url = "http://192.168.60.49/MySQL/getimage.php";
+		String url = "http://192.168.60.49/android/database/getimage.php";
 
-		private String getWord() {
+		private void initWordAndLink() {
 			String result = "";
 			InputStream is = null;
 			
@@ -147,45 +145,20 @@ public class GameActivity extends Activity {
 				
 				is.close();
 				result = sb.toString();
-			} catch (Exception e) {
-				
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 			
 			try {
 				JSONArray jArray = new JSONArray(result);
 				for(int i = 0; i < jArray.length(); i++) {
 					JSONObject jData = jArray.getJSONObject(i);
-					Log.i("test", jData.getString("name"));
-					result = jData.getString("name");
+					word = jData.getString("name");
+					link = jData.getString("link");
 				}
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
-			
-			
-			
-			
-
-			return result;
 		}
-		// private JSONObject getJSONObject() throws ClientProtocolException,
-		// IOException, JSONException {
-		// StringBuilder sb = new StringBuilder(url);
-		// HttpClient client = new DefaultHttpClient();
-		//
-		// HttpGet get = new HttpGet(sb.toString());
-		// HttpResponse response = client.execute(get);
-		// int status = response.getStatusLine().getStatusCode();
-		// if (status == 200) {
-		// HttpEntity entity = response.getEntity();
-		// String data = EntityUtils.toString(entity);
-		// JSONArray jArray = new JSONArray(data);
-		// JSONObject jObject = jArray.getJSONObject(0);
-		// return jObject;
-		// } else {
-		// Toast.makeText(GameActivity.this, "Error", Toast.LENGTH_SHORT);
-		// return null;
-		// }
-		// }
 	}
 }
