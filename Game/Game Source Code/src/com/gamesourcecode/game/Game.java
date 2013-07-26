@@ -32,21 +32,28 @@ public class Game extends SurfaceView implements Runnable {
 	private OnTouchHandler motion;
 	private GameActivity activity;
 
-	private int letterButtonCols = 6, letterButtonRows = 2;
+	private int letterButtonCols = 7, letterButtonRows = 2;
 	private int wordButtonSize;
+	private int paddingX, paddingY;
+	private final int WIDTH, HEIGHT;
 
+	private double WHRatio = 1.618;
 	private double currentTime = 0, totalTime = 20;
+
+	private char[] chars;
 
 	private String word;
 
 	private List<WordButton> wordButtons;
 	private List<LetterButton> letterButtons;
+	private List<GameButton> buttons;
+	private List<GameButton> miscButtons;
 
 	private boolean running = false;
 	private boolean guessedRight = false;
 
 	// Just for testing
-	int color = 255;
+	int color = 0x44;
 
 	public Game(Context context, GameActivity activity, Bitmap[] bitmaps, String word) {
 		super(context);
@@ -55,14 +62,31 @@ public class Game extends SurfaceView implements Runnable {
 
 		holder = getHolder();
 
-		if (word.length() < 8) wordButtonSize = activity.getWidth() / 8;
-		else wordButtonSize = activity.getWidth() / (word.length() + 1);
-
-		if (word.length() > letterButtonCols * letterButtonRows) {
-			letterButtonCols = (word.length() + 1) / letterButtonRows;
+		if (activity.getWidth() * WHRatio > activity.getHeight()) {
+			HEIGHT = (int) (activity.getHeight() * 0.9);
+			WIDTH = (int) (HEIGHT / WHRatio);
+		} else {
+			WIDTH = (int) (activity.getWidth() * 0.9);
+			HEIGHT = (int) (WIDTH * WHRatio);
 		}
 
-		image = new Image(this, bitmaps);
+		paddingX = (activity.getWidth() - WIDTH) / 2;
+		paddingY = (activity.getHeight() - HEIGHT) / 2;
+
+		if (word.length() < 8) wordButtonSize = WIDTH / 8;
+		else wordButtonSize = WIDTH / (word.length() + 1);
+
+		// +2 is to add space for the clear and scramble buttons
+		// +3 is +2 and to prevent letterButtonCols be to short since it's an
+		// int
+		// if word.length() = 9 ==> letterButtonCols = 9 / 2 = 4.5 = 4 (when
+		// casting to an int)
+		// cols * rows = 2 * 4 = 8 > word.length()
+		if (word.length() > letterButtonCols * letterButtonRows + 2) {
+			letterButtonCols = (word.length() + 3) / letterButtonRows;
+		}
+
+		image = new Image(this, bitmaps, WIDTH);
 		motion = new OnTouchHandler(this);
 		setOnTouchListener(motion);
 
@@ -124,6 +148,10 @@ public class Game extends SurfaceView implements Runnable {
 		if (currentTime < totalTime) image.tick();
 		else if (!guessedRight) color = 0;
 
+		for (GameButton b : buttons) {
+			b.tick();
+		}
+
 		String string = "";
 		for (GameButton b : wordButtons) {
 			if (!b.containsLetter()) return;
@@ -151,58 +179,118 @@ public class Game extends SurfaceView implements Runnable {
 
 		Paint alpha = new Paint();
 		alpha.setAlpha(180);
-		
-		// Renders the grabbed button last (so that it will be over the other buttons)
+
+		// Renders the grabbed button last (so that it will be over the other
+		// buttons)
 		for (GameButton b : getButtons()) {
-			if (!b.isGrabbed() || !b.containsLetter()) b.render(screen, null);
+			if (!b.isGrabbed()) b.render(screen, null);
 
 		}
 
 		for (GameButton b : getButtons()) {
-			if (b.isGrabbed() && b.containsLetter()) b.render(screen, alpha);
+			if (b.isGrabbed()) b.render(screen, alpha);
 		}
 
 		holder.unlockCanvasAndPost(screen);
 	}
 
 	private void initButtons() {
+		buttons = new ArrayList<GameButton>();
+		miscButtons = new ArrayList<GameButton>();
 		letterButtons = new ArrayList<LetterButton>();
+		wordButtons = new ArrayList<WordButton>();
 
-		int width = activity.getWidth() / letterButtonCols;
+		int width = WIDTH / letterButtonCols;
 		int height = width;
-		int xOffset = 0, yOffset = 0;
+		int xOffset = paddingX, yOffset = paddingY;
 
-		char[] chars = new char[letterButtonCols * letterButtonRows];
+		// -2 to not make chars for the scramble and clear buttons
+		chars = new char[letterButtonCols * letterButtonRows - 2];
 		chars = generateLetterButtonChars(chars);
+		int charIndex = 0;
 
 		for (int y = 0; y < letterButtonRows; y++) {
-			yOffset = activity.getHeight() - height * (y + letterButtonRows - 1);
+			yOffset = (HEIGHT + paddingY) - height * (letterButtonRows - y);
 			for (int x = 0; x < letterButtonCols; x++) {
-				xOffset = x * width;
-				char c = chars[x + y * letterButtonCols];
-				Bitmap bitmap = getAlphabetBitmap(c, width, height);
-				letterButtons.add(new LetterButton(xOffset, yOffset, width, height, this, bitmap, c));
-
+				xOffset = x * width + paddingX;
+				// if x is the last button of the col
+				// This makes the scramble and clear buttons
+				if (x == letterButtonCols - 1) {
+					if (y == 0) {
+						Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.scramble);
+						bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
+						miscButtons.add(new GameButton(xOffset, yOffset, width, height, this, bitmap) {
+							// Makes the chars of the letter buttons which contain a char randomly change
+							// The empty letter buttons will not change
+							public void onClick() {
+								int index = 0;
+								for (LetterButton l : letterButtons) {
+									if (l.containsLetter()) {
+										index++;
+									}
+								}
+								char[] chars = new char[index]; 
+								index = 0;
+								for (int i = 0; i < letterButtons.size(); i++) {
+									if (letterButtons.get(i).containsLetter()) {
+										chars[index] = letterButtons.get(i).getChar();
+										index++;
+									}
+								}
+								chars = scrambleCharArray(chars);
+								index = 0;
+								for (int i = 0; i < letterButtons.size(); i++) {
+									if (letterButtons.get(i).containsLetter()) {
+										letterButtons.get(i).scramble(chars[index]);
+										index++;
+									}
+								}
+							}
+						});
+					} else if (y == 1) {
+						Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.clear);
+						bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
+						miscButtons.add(new GameButton(xOffset, yOffset, width, height, this, bitmap) {
+							public void onClick() {
+								for (GameButton b : game.getButtons()) {
+									b.reset();
+								}
+							}
+						});
+					} else {
+						Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.empty);
+						miscButtons.add(new GameButton(xOffset, yOffset, width, height, this, bitmap));
+					}
+				} else {
+					// charIndex makes it easier to chose the correct char from
+					// the char array
+					// The scramble and clear buttons make it impossible to use
+					// x + y * letterButtonCols
+					char c = chars[charIndex];
+					Bitmap bitmap = getAlphabetBitmap(c, width, height);
+					letterButtons.add(new LetterButton(xOffset, yOffset, width, height, this, bitmap, c));
+					charIndex++;
+				}
 			}
 		}
-
-		wordButtons = new ArrayList<WordButton>();
-		xOffset = yOffset = 0;
-
-		// yOffset = ((activity.getHeight() - letterButtonRows * height) +
-		// (image.getY() + image.getHeight())) / 2;
-		yOffset = (int) (activity.getHeight() * .62);
 
 		width = wordButtonSize;
 		height = wordButtonSize;
 
-		xOffset = (activity.getWidth() - word.length() * width) / 2;
+		// Will make the word buttons appear 1x the height of a letter button,
+		// over the topmost letter button row
+		yOffset = letterButtons.get(0).getY() - letterButtons.get(0).getHeight() - wordButtonSize;
+		xOffset = (WIDTH - word.length() * width) / 2 + paddingX;
 
 		for (int i = 0; i < word.length(); i++) {
 			Bitmap bitmap = getAlphabetBitmap(' ', width, height);
 			if (word.charAt(i) != ' ') wordButtons.add(new WordButton(xOffset, yOffset, width, height, this, bitmap));
 			xOffset += width;
 		}
+
+		buttons.addAll(letterButtons);
+		buttons.addAll(wordButtons);
+		buttons.addAll(miscButtons);
 
 	}
 
@@ -279,13 +367,13 @@ public class Game extends SurfaceView implements Runnable {
 
 		// Randomizes the order of the array
 		// Returns the temp array
-		
+
 		return scrambleCharArray(chars);
-		
+
 	}
-	
+
 	private char[] scrambleCharArray(char[] chars) {
-		
+
 		char[] temp = new char[chars.length];
 		boolean[] bool = new boolean[chars.length];
 		for (int i = 0; i < bool.length; i++) {
@@ -306,28 +394,8 @@ public class Game extends SurfaceView implements Runnable {
 		return temp;
 	}
 
-	public double getTotalTime() {
-		return totalTime;
-	}
-
-	public double getTime() {
-		return currentTime;
-	}
-
-	public GameButton[] getButtons() {
-		GameButton[] b = new GameButton[wordButtons.size() + letterButtons.size()];
-		int i = 0;
-		for (GameButton bb : wordButtons) {
-			b[i] = bb;
-			i++;
-		}
-
-		for (GameButton bb : letterButtons) {
-			b[i] = bb;
-			i++;
-		}
-
-		return b;
+	public List<GameButton> getButtons() {
+		return buttons;
 	}
 
 	public Bitmap getEmptyBitmap(int width, int height) {
@@ -344,5 +412,25 @@ public class Game extends SurfaceView implements Runnable {
 
 	public boolean hasGuessedRight() {
 		return guessedRight;
+	}
+
+	public double getTotalTime() {
+		return totalTime;
+	}
+
+	public double getTime() {
+		return currentTime;
+	}
+
+	public int getPaddingX() {
+		return paddingX;
+	}
+
+	public int getPaddingY() {
+		return paddingY;
+	}
+
+	public char[] getCharsArray() {
+		return null;
 	}
 }

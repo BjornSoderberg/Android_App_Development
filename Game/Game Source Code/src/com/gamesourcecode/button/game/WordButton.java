@@ -27,4 +27,9 @@ public class WordButton extends GameButton {
 			}
 		}
 	}
+	
+	public void reset() {
+		super.reset();
+		containsLetter = false;
+	}
 }

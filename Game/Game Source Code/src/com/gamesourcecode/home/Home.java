@@ -8,11 +8,10 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.os.SystemClock;
-import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
 
 import com.gamesourcecode.R;
 import com.gamesourcecode.button.Button;
@@ -25,7 +24,7 @@ public class Home extends SurfaceView implements Runnable {
 	private Thread thread;
 	private Canvas screen;
 	private OnTouchHandler motion;
-	
+
 	private List<Button> buttons;
 
 	private HomeActivity activity;
@@ -36,12 +35,12 @@ public class Home extends SurfaceView implements Runnable {
 		super(context);
 		this.activity = activity;
 		holder = getHolder();
-		
+
 		motion = new OnTouchHandler(this);
 		setOnTouchListener(motion);
-		
+
 		initButtons();
-		
+
 		start();
 	}
 
@@ -64,7 +63,6 @@ public class Home extends SurfaceView implements Runnable {
 	}
 
 	public void run() {
-		double startTime = SystemClock.uptimeMillis();
 		long lastTime = SystemClock.uptimeMillis();
 		double millisPerTick = 1000D / 60D;
 		double delta = 0;
@@ -97,50 +95,47 @@ public class Home extends SurfaceView implements Runnable {
 		if (!holder.getSurface().isValid()) return;
 
 		screen = holder.lockCanvas();
-		
-		screen.drawRGB(255, 255, 255);
-		
-		for(Button b : buttons) {
-			b.render(screen, null);
+
+		screen.drawRGB(0x66, 0x66, 0x66);
+
+		Paint alpha = new Paint();
+		alpha.setAlpha(180);
+
+		for (Button b : buttons) {
+			if (b.isGrabbed()) b.render(screen, alpha);
+			else b.render(screen, null);
 		}
 
 		holder.unlockCanvasAndPost(screen);
 	}
 
-	public boolean onTouch(View v, MotionEvent e) {
-		if (e.getAction() == MotionEvent.ACTION_DOWN) {
-			startGame();
-		}
-
-		return false;
-	}
-	
 	private void initButtons() {
 		buttons = new ArrayList<Button>();
 		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.startgame);
-		
-		int width = (int)(activity.getWidth() * 0.8);
+
+		int width = (int) (activity.getWidth() * 0.8);
 		int height = width * bitmap.getHeight() / bitmap.getWidth();
-		
+
 		Button start = new Button((activity.getWidth() - width) / 2, (activity.getHeight() - height) / 2, width, height, bitmap) {
 			public void onClick() {
 				startGame();
 			}
 		};
-		
+
 		buttons.add(start);
 	}
 
 	private void startGame() {
+		render();
 
 		Intent intent = new Intent(getContext(), GameActivity.class);
 
 		activity.startActivity(intent);
 		activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-		
+
 		running = false;
 	}
-	
+
 	public List<Button> getButtons() {
 		return buttons;
 	}

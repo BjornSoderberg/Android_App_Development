@@ -17,20 +17,25 @@ public class Image {
 	private Bitmap bitmap2;
 	private Bitmap[] bitmaps;
 
-	private int width, height;
+	private int width, height, x, y;
 	private Game game;
 	private double opacity;
 	private int index = 0;
 
-	private int radius = 1;
-
-	public Image(Game game, Bitmap[] bitmaps) {
+	public Image(Game game, Bitmap[] bitmaps, int WIDTH) {
 		this.game = game;
 		this.bitmaps = bitmaps;
 
 		// Just for testing
-		width = 500;
-		height = 400;
+		width = WIDTH;
+		height = WIDTH * bitmaps[0].getHeight() / bitmaps[0].getWidth();
+		
+		x = game.getPaddingX();
+		y = game.getPaddingY();
+		
+		for(int i = 0; i < this.bitmaps.length; i++) {
+			this.bitmaps[i] = Bitmap.createScaledBitmap(this.bitmaps[i], width, height, true);
+		}
 	}
 
 	public void tick() {
@@ -50,11 +55,10 @@ public class Image {
 	}
 
 	public void render(Canvas screen) {
-		int padding = (game.getWidth() - width) / 2;
 		Paint alpha = new Paint();
 		alpha.setAlpha((int) (255 * (1 - opacity)));
-		if (bitmap != null) screen.drawBitmap(bitmap, padding, padding, null);
-		if (bitmap2 != null) screen.drawBitmap(bitmap2, padding, padding, alpha);
+		if (bitmap != null) screen.drawBitmap(bitmap, x, y, null);
+		if (bitmap2 != null) screen.drawBitmap(bitmap2, x, y, alpha);
 	}
 
 	private Bitmap getBitmap(int i) {
@@ -72,10 +76,10 @@ public class Image {
 	}
 
 	public int getWidth() {
-		return bitmap.getWidth();
+		return width;
 	}
 
 	public int getHeight() {
-		return bitmap.getHeight();
+		return height;
 	}
 }
