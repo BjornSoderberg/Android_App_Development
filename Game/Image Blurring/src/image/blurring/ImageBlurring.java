@@ -31,10 +31,10 @@ public class ImageBlurring extends Canvas {
 	private int radius = 1;
 	private int iterations = 0;
 	private int index = 0;
-	
+
 	private boolean running = false;
 
-	private BufferedImage image, tempImg;
+	private BufferedImage image, tempImg, tempImg2;
 	private int width = 0, height = 0, divide = 0, desiredWidth = 0, desiredHeight = 0;
 
 	private String fileName;
@@ -42,6 +42,7 @@ public class ImageBlurring extends Canvas {
 	private String link;
 
 	private double[] red, green, blue, r, g, b;
+	private double ratio = 1.4;
 	private int[] pixels;
 
 	public ImageBlurring() {
@@ -53,15 +54,26 @@ public class ImageBlurring extends Canvas {
 
 			for (File fileEntry : folder.listFiles()) {
 				fileName = fileEntry.getName();
-				if (getExtension(fileName).equals(".png")) {
+				if (getExtension(fileName).equals(".jpg") || getExtension(fileName).equals(".png")) {
 					System.out.println("Loaded");
+					
 					tempImg = ImageIO.read(fileEntry);
+					tempImg2 = ImageIO.read(fileEntry);
+					
+					if(tempImg.getWidth() < (tempImg.getHeight() * 1.0) * ratio) {
+						tempImg = tempImg.getSubimage(0, (int)(tempImg.getHeight() - (tempImg.getWidth() * 1.0) / ratio) / 2, tempImg.getWidth(), (int)((tempImg.getWidth() * 1.0) / ratio));
+						tempImg2 = tempImg2.getSubimage(0, (int)(tempImg2.getHeight() - (tempImg2.getWidth() * 1.0) / ratio) / 2, tempImg2.getWidth(), (int)((tempImg2.getWidth() * 1.0) / ratio));
+					} else {
+						tempImg = tempImg.getSubimage((int)(tempImg.getWidth() - (tempImg.getHeight()*1.0) * ratio) / 2, 0, (int)((tempImg.getHeight() * 1.0)*ratio), tempImg.getHeight());
+						tempImg2 = tempImg2.getSubimage((int)(tempImg2.getWidth() - (tempImg2.getHeight()*1.0) * ratio) / 2, 0, (int)((tempImg2.getHeight() * 1.0)*ratio), tempImg2.getHeight());
+					}
+					
+					
+					
 					width = tempImg.getWidth();
 					height = tempImg.getHeight();
 
 					getDesiredScales();
-
-					tempImg = getScaledImage(tempImg, desiredWidth, desiredHeight);
 
 					width = desiredWidth;
 					height = desiredHeight;
@@ -72,7 +84,7 @@ public class ImageBlurring extends Canvas {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+		System.out.println("\n\nFinished saving!");
 		System.exit(0);
 	}
 
@@ -86,16 +98,23 @@ public class ImageBlurring extends Canvas {
 	}
 
 	private void getDesiredScales() {
-		desiredWidth = (int) ((width < height) ? 400 : 400 * (width * 1.0) / (height * 1.0));
-		desiredHeight = (int) ((width > height) ? 400 : 400 * (height * 1.0) / (width * 1.0));
+		desiredWidth = (int) ((width < height) ? 200 : 200 * (width * 1.0) / (height * 1.0));
+		desiredHeight = (int) ((width > height) ? 200 : 200 * (height * 1.0) / (width * 1.0));
 	}
 
 	private void start() {
-		createMySQLColumn();
-		
-		initArrays();
 		iterations = index = 0;
+
+		createMySQLColumn();
+
+		// This is used to save an image 4x the size of the other images
+		tempImg2 = getScaledImage(tempImg2, desiredWidth * 2, desiredHeight * 2);
+		saveLargeImage();
 		
+		tempImg = getScaledImage(tempImg, desiredWidth, desiredHeight);
+
+		initArrays();
+
 		running = true;
 
 		setPreferredSize(new Dimension(width, height));
@@ -117,19 +136,38 @@ public class ImageBlurring extends Canvas {
 			}
 			render();
 
-			iterations++;
-
-			if (iterations == 1 || iterations == 2 || iterations == 4 || iterations == 7 || iterations == 12 || iterations == 20 || iterations == 30 || iterations == 40 || iterations == 50 || iterations == 65 || iterations == 80 || iterations == 100 || iterations == 140 || iterations == 180 || iterations == 250 || iterations == 350 || iterations == 500 || iterations == 700 || iterations == 900 || iterations == 1100 || iterations == 1400 || iterations == 1900 || iterations == 2500 || iterations == 3000) {
+			if (iterations == 1 || iterations == 2 || iterations == 3 || iterations == 4 || iterations == 5 || iterations == 6 || iterations == 8 || iterations == 10 || iterations == 13
+					|| iterations == 18 || iterations == 23 || iterations == 30 || iterations == 40 || iterations == 55 || iterations == 75 || iterations == 100 || iterations == 140
+					|| iterations == 200 || iterations == 280 || iterations == 400/* || iterations == 700 || iterations == 900 || iterations == 1100*/) {
 				System.out.println("Saving image\t" + iterations);
 				save();
 			}
 			
-			if(iterations == 3000) {
+			if(iterations == 1 || iterations == 2 || iterations == 3) {
+				System.out.println("Saving image\t" + iterations);
+				save();
+			}
+
+			if (iterations == 400) {
 				running = false;
 			}
 
 			blurImage();
+			iterations++;
 		}
+	}
+
+	private void saveLargeImage() {
+		int[] temp2 = tempImg2.getRGB(0, 0, tempImg2.getWidth(), tempImg2.getHeight(), null, 0, tempImg2.getWidth());
+
+		BufferedImage img = new BufferedImage(width * 2, height * 2, BufferedImage.TYPE_INT_RGB);
+		int[] pix = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
+
+		for (int i = 0; i < temp2.length; i++) {
+			pix[i] = temp2[i];
+		}
+
+		save(img);
 	}
 
 	private void initArrays() {
@@ -260,8 +298,7 @@ public class ImageBlurring extends Canvas {
 		return sub;
 	}
 
-	private void save() {
-
+	private void save(BufferedImage image) {
 		String ext = "jpg";
 		File file = new File("C:\\xampp\\htdocs\\android\\images\\" + link + index + "." + ext);
 		try {
@@ -270,6 +307,10 @@ public class ImageBlurring extends Canvas {
 			e.printStackTrace();
 		}
 		index++;
+	}
+
+	private void save() {
+		save(image);
 	}
 
 	private String removeExtension(String string) {
@@ -283,45 +324,45 @@ public class ImageBlurring extends Canvas {
 
 		return sub;
 	}
-	
+
 	private void createMySQLColumn() {
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 			Connection connection = DriverManager.getConnection("jdbc:mysql://localhost/android", "root", "david");
-			
+
 			Statement statement = connection.createStatement();
-			
+
 			try {
 				generateRandomLink();
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
 			}
-			
+
 			statement.executeUpdate("INSERT INTO images ( name, link ) VALUES ( '" + removeExtension(fileName) + "', '" + link + "' )");
-			
+
 			connection.close();
-			
+
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {
-			e.printStackTrace();}
+			e.printStackTrace();
+		}
 	}
-	
+
 	private void generateRandomLink() throws UnsupportedEncodingException, NoSuchAlgorithmException {
 		MessageDigest md = MessageDigest.getInstance("MD5");
 		Random random = new Random();
-		
+
 		String string = fileName + random.nextInt(1000);
 		byte[] hash = md.digest(string.getBytes("UTF-8"));
-		
+
 		StringBuilder sb = new StringBuilder(2 * hash.length);
-		for(byte b : hash) {
-			sb.append(String.format("%02x", b&0xff));
+		for (byte b : hash) {
+			sb.append(String.format("%02x", b & 0xff));
 		}
-		
+
 		link = sb.toString();
 		System.out.println(link);
 	}
@@ -329,5 +370,5 @@ public class ImageBlurring extends Canvas {
 	public static void main(String[] args) {
 		new ImageBlurring();
 	}
-	
+
 }

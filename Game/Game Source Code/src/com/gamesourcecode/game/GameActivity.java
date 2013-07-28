@@ -17,6 +17,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -26,9 +27,13 @@ import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.gamesourcecode.home.HomeActivity;
+
 public class GameActivity extends Activity {
 
 	private String word = "", link = "";
+
+	private Game game = null;
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -37,22 +42,42 @@ public class GameActivity extends Activity {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-		// word = getRandomWord();
-
 		LoadBitmaps loader = new LoadBitmaps();
 		loader.execute(this);
 
 	}
 
-	// Just for testing to swap between images
-	// private String getRandomWord() {
-	// Random random = new Random();
-	// int i = random.nextInt(3);
-	// if(i == 0) return "guitar";
-	// if(i == 1) return "cat";
-	// if(i == 2) return "sydney";
-	// return "";
-	// }
+	protected void onPause() {
+		super.onPause();
+		Log.i("GAME", "PAUSED");
+	}
+
+	protected void onStop() {
+		super.onStop();
+		Log.i("GAME", "STOPPED");
+	}
+
+	protected void onStart() {
+		super.onStart();
+		Log.i("GAME", "STARTED");
+		if (game != null) {
+			Log.i("GAME", "STARTING HOME ACTIVITY");
+			Intent i = new Intent(this, HomeActivity.class);
+			game.setRunning(false);
+			startActivity(i);
+		}
+	}
+
+	protected void onDestroy() {
+		super.onDestroy();
+		Log.i("GAME", "DESTROYED");
+		game.stop();
+		game = null;
+		finish();
+	}
+
+	public void onBackPressed() {
+	}
 
 	public int getWidth() {
 		DisplayMetrics dm = new DisplayMetrics();
@@ -77,7 +102,7 @@ public class GameActivity extends Activity {
 		protected Bitmap[] doInBackground(GameActivity... params) {
 
 			initWordAndLink();
-			
+
 			activity = params[0];
 
 			Bitmap[] bitmaps = new Bitmap[24];
@@ -92,10 +117,9 @@ public class GameActivity extends Activity {
 		protected void onPostExecute(Bitmap[] result) {
 			super.onPostExecute(result);
 
-			Game game = new Game(activity, activity, result, word);
+			game = new Game(activity, activity, result, word);
 
 			activity.setContentView(game);
-
 		}
 
 		private Bitmap getBitmap(int i) {
@@ -110,6 +134,11 @@ public class GameActivity extends Activity {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
+			} catch (OutOfMemoryError e) {
+				e.printStackTrace();
+				for (int j = 0; j < 10; j++) {
+					Log.i("GAME ACTIVITY", "OUT OF MEMORY!!!");
+				}
 			}
 
 			return null;
@@ -120,38 +149,38 @@ public class GameActivity extends Activity {
 		private void initWordAndLink() {
 			String result = "";
 			InputStream is = null;
-			
+
 			try {
-				
+
 				HttpClient client = new DefaultHttpClient();
 				HttpPost post = new HttpPost(url);
 				HttpResponse response = client.execute(post);
 				HttpEntity entity = response.getEntity();
 				is = entity.getContent();
-				
+
 			} catch (ClientProtocolException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
+
 			try {
 				BufferedReader reader = new BufferedReader(new InputStreamReader(is, "iso-8859-1"), 8);
 				StringBuilder sb = new StringBuilder();
 				String line = null;
-				while((line = reader.readLine()) != null) {
+				while ((line = reader.readLine()) != null) {
 					sb.append(line + "\n");
 				}
-				
+
 				is.close();
 				result = sb.toString();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
+
 			try {
 				JSONArray jArray = new JSONArray(result);
-				for(int i = 0; i < jArray.length(); i++) {
+				for (int i = 0; i < jArray.length(); i++) {
 					JSONObject jData = jArray.getJSONObject(i);
 					word = jData.getString("name");
 					link = jData.getString("link");

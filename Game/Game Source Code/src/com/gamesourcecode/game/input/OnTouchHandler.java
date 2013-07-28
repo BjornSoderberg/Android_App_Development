@@ -66,8 +66,9 @@ public class OnTouchHandler implements OnTouchListener {
 					// This prevents the button to be "clicked" when dragged
 					// back to its original location
 					if (b instanceof LetterButton) {
-						((LetterButton) b).setXY(x, y);
-						if (!b.getRect().intersect(b.getOriginRect()) && b instanceof LetterButton) {
+						if (b.containsLetter()) ((LetterButton) b).setXY(x - xOrigin + b.getOriginX(), y - yOrigin + b.getOriginY());
+						
+						if (!b.getRect().intersect(b.getOriginRect())) {
 							((LetterButton) b).outside();
 						}
 					}

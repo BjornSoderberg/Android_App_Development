@@ -4,13 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.SurfaceHolder;
+import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
 
 import com.gamesourcecode.R;
@@ -20,8 +24,9 @@ import com.gamesourcecode.button.game.LetterButton;
 import com.gamesourcecode.button.game.WordButton;
 import com.gamesourcecode.game.gfx.Image;
 import com.gamesourcecode.game.input.OnTouchHandler;
+import com.gamesourcecode.home.HomeActivity;
 
-public class Game extends SurfaceView implements Runnable {
+public class Game extends SurfaceView implements Runnable, Callback {
 
 	private Thread thread;
 	private SurfaceHolder holder;
@@ -42,7 +47,7 @@ public class Game extends SurfaceView implements Runnable {
 
 	private char[] chars;
 
-	private String word;
+	private String word = "";
 
 	private List<WordButton> wordButtons;
 	private List<LetterButton> letterButtons;
@@ -51,6 +56,7 @@ public class Game extends SurfaceView implements Runnable {
 
 	private boolean running = false;
 	private boolean guessedRight = false;
+	private boolean surfaceDestroyed = false;
 
 	// Just for testing
 	int color = 0x44;
@@ -61,6 +67,7 @@ public class Game extends SurfaceView implements Runnable {
 		this.word = word;
 
 		holder = getHolder();
+		holder.addCallback(this);
 
 		if (activity.getWidth() * WHRatio > activity.getHeight()) {
 			HEIGHT = (int) (activity.getHeight() * 0.9);
@@ -96,6 +103,7 @@ public class Game extends SurfaceView implements Runnable {
 
 	public synchronized void start() {
 		running = true;
+		surfaceDestroyed = false;
 
 		thread = new Thread(this, "Game");
 		thread.start();
@@ -103,13 +111,13 @@ public class Game extends SurfaceView implements Runnable {
 
 	public synchronized void stop() {
 		running = false;
+		recycle();
 
 		try {
 			thread.join();
 		} catch (InterruptedException e) {
-			System.out.println("Could not close the game thread!");
-			e.printStackTrace();
 		}
+
 	}
 
 	public void run() {
@@ -140,13 +148,16 @@ public class Game extends SurfaceView implements Runnable {
 	}
 
 	private void tick() {
+		// Log.i("GAME", "Tick");
 
 		for (Button b : getButtons()) {
 			b.tick();
 		}
 
-		if (currentTime < totalTime) image.tick();
-		else if (!guessedRight) color = 0;
+		if (currentTime < totalTime && image != null) image.tick();
+		else {
+			if (!guessedRight) color = 0;
+		}
 
 		for (GameButton b : buttons) {
 			b.tick();
@@ -157,6 +168,21 @@ public class Game extends SurfaceView implements Runnable {
 			if (!b.containsLetter()) return;
 			string += b.getChar();
 		}
+
+		// /////// STARTING HOME ACTIVITY WHEN THE WORD IS CORRECT
+		if (guessedRight) {
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			// Relaunches the game activity
+			Intent i = new Intent(activity, GameActivity.class);
+			activity.startActivity(i);
+			stop();
+			return;
+		}
+		// ///////// END//////////////
 
 		// Makes the word ignore every space
 		String word = "";
@@ -170,28 +196,45 @@ public class Game extends SurfaceView implements Runnable {
 	}
 
 	private void render() {
+		// Log.i("GAME", "Validate screen");
+
+		// Disables rendering when the surface is getting destroyed
+		if (surfaceDestroyed) return;
 		if (!holder.getSurface().isValid()) return;
 
-		screen = holder.lockCanvas();
+		try {
+			screen = holder.lockCanvas();
+		} catch (IllegalArgumentException e) {
+
+		}
+
+		if (screen == null) return;
+
 		screen.drawRGB(color, color, color);
 
-		image.render(screen);
+		if (image != null) image.render(screen);
 
 		Paint alpha = new Paint();
 		alpha.setAlpha(180);
 
-		// Renders the grabbed button last (so that it will be over the other
+		// Renders the grabbed button last (so that it will be over the
+		// other
 		// buttons)
 		for (GameButton b : getButtons()) {
-			if (!b.isGrabbed()) b.render(screen, null);
+			if (!b.isGrabbed() && screen != null) b.render(screen, null);
 
 		}
 
 		for (GameButton b : getButtons()) {
-			if (b.isGrabbed()) b.render(screen, alpha);
+			if (b.isGrabbed() && screen != null) b.render(screen, alpha);
 		}
 
-		holder.unlockCanvasAndPost(screen);
+		try {
+			// if (screen != null)
+			holder.unlockCanvasAndPost(screen);
+		} catch (IllegalArgumentException e) {
+
+		}
 	}
 
 	private void initButtons() {
@@ -220,7 +263,8 @@ public class Game extends SurfaceView implements Runnable {
 						Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.scramble);
 						bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
 						miscButtons.add(new GameButton(xOffset, yOffset, width, height, this, bitmap) {
-							// Makes the chars of the letter buttons which contain a char randomly change
+							// Makes the chars of the letter buttons which
+							// contain a char randomly change
 							// The empty letter buttons will not change
 							public void onClick() {
 								int index = 0;
@@ -229,7 +273,7 @@ public class Game extends SurfaceView implements Runnable {
 										index++;
 									}
 								}
-								char[] chars = new char[index]; 
+								char[] chars = new char[index];
 								index = 0;
 								for (int i = 0; i < letterButtons.size(); i++) {
 									if (letterButtons.get(i).containsLetter()) {
@@ -432,5 +476,43 @@ public class Game extends SurfaceView implements Runnable {
 
 	public char[] getCharsArray() {
 		return null;
+	}
+
+	public synchronized void setRunning(boolean bool) {
+		running = bool;
+		image = null;
+		screen = null;
+	}
+
+	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+		Log.i("GAME", "Surface Changed");
+	}
+
+	public void surfaceCreated(SurfaceHolder holder) {
+
+	}
+
+	public void surfaceDestroyed(SurfaceHolder holder) {
+		surfaceDestroyed = true;
+	}
+
+	private void recycle() {
+		if (image != null) {
+			image.recycleBitmaps();
+			image = null;
+		}
+		if (getButtons() != null) {
+			for (Button b : getButtons()) {
+				b.recycleBitmaps();
+				b = null;
+			}
+			letterButtons = null;
+			wordButtons = null;
+			miscButtons = null;
+		}
+	}
+
+	public Activity getActivity() {
+		return activity;
 	}
 }

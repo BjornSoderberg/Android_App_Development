@@ -10,7 +10,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.SurfaceHolder;
+import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
 
 import com.gamesourcecode.R;
@@ -18,8 +20,7 @@ import com.gamesourcecode.button.Button;
 import com.gamesourcecode.game.GameActivity;
 import com.gamesourcecode.home.input.OnTouchHandler;
 
-public class Home extends SurfaceView implements Runnable {
-
+public class Home extends SurfaceView implements Runnable, Callback {
 	private SurfaceHolder holder;
 	private Thread thread;
 	private Canvas screen;
@@ -30,14 +31,16 @@ public class Home extends SurfaceView implements Runnable {
 	private HomeActivity activity;
 
 	private boolean running = false;
+	private boolean surfaceDestroyed = false;
 
 	public Home(Context context, HomeActivity activity) {
 		super(context);
 		this.activity = activity;
+
 		holder = getHolder();
+		holder.addCallback(this);
 
 		motion = new OnTouchHandler(this);
-		setOnTouchListener(motion);
 
 		initButtons();
 
@@ -46,20 +49,24 @@ public class Home extends SurfaceView implements Runnable {
 
 	public synchronized void start() {
 		running = true;
+		surfaceDestroyed = false;
 
-		thread = new Thread(this, "Canvas");
+		setOnTouchListener(motion);
+
+		thread = new Thread(this, "Home");
 		thread.start();
 	}
 
 	public synchronized void stop() {
 		running = false;
+		recycle();
 
 		try {
 			thread.join();
 		} catch (InterruptedException e) {
-			System.out.println("Could not close the game thread!");
-			e.printStackTrace();
 		}
+
+		thread = null;
 	}
 
 	public void run() {
@@ -92,21 +99,24 @@ public class Home extends SurfaceView implements Runnable {
 	}
 
 	private void render() {
+		if (surfaceDestroyed) return;
 		if (!holder.getSurface().isValid()) return;
 
 		screen = holder.lockCanvas();
+		if (screen == null) return;
 
 		screen.drawRGB(0x66, 0x66, 0x66);
 
 		Paint alpha = new Paint();
 		alpha.setAlpha(180);
 
-		for (Button b : buttons) {
-			if (b.isGrabbed()) b.render(screen, alpha);
-			else b.render(screen, null);
+		if (buttons != null) {
+			for (Button b : buttons) {
+				if (b.isGrabbed() && screen != null) b.render(screen, alpha);
+				else b.render(screen, null);
+			}
 		}
-
-		holder.unlockCanvasAndPost(screen);
+		if (screen != null) holder.unlockCanvasAndPost(screen);
 	}
 
 	private void initButtons() {
@@ -131,7 +141,8 @@ public class Home extends SurfaceView implements Runnable {
 		Intent intent = new Intent(getContext(), GameActivity.class);
 
 		activity.startActivity(intent);
-		activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+		// activity.overridePendingTransition(android.R.anim.fade_in,
+		// android.R.anim.fade_out);
 
 		running = false;
 	}
@@ -139,4 +150,31 @@ public class Home extends SurfaceView implements Runnable {
 	public List<Button> getButtons() {
 		return buttons;
 	}
+
+	public void setRunning(boolean bool) {
+		running = bool;
+	}
+
+	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
+	}
+
+	public void surfaceCreated(SurfaceHolder holder) {
+
+	}
+
+	public void surfaceDestroyed(SurfaceHolder holder) {
+		surfaceDestroyed = true;
+	}
+
+	private void recycle() {
+		if (buttons != null) {
+			for (Button b : getButtons()) {
+				b.recycleBitmaps();
+				b = null;
+			}
+			buttons = null;
+		}
+	}
+
 }

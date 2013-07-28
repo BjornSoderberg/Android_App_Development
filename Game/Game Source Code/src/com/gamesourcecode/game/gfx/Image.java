@@ -1,15 +1,14 @@
 package com.gamesourcecode.game.gfx;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-
+import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.view.Gravity;
+import android.widget.Toast;
 
 import com.gamesourcecode.game.Game;
+import com.gamesourcecode.game.GameActivity;
 
 public class Image {
 
@@ -24,18 +23,27 @@ public class Image {
 
 	public Image(Game game, Bitmap[] bitmaps, int WIDTH) {
 		this.game = game;
-		this.bitmaps = bitmaps;
 
-		// Just for testing
 		width = WIDTH;
 		height = WIDTH * bitmaps[0].getHeight() / bitmaps[0].getWidth();
-		
+
+		try {
+			this.bitmaps = new Bitmap[bitmaps.length];
+			for (int i = 0; i < bitmaps.length; i++) {
+				this.bitmaps[i] = Bitmap.createScaledBitmap(bitmaps[i], width, height, true);
+				bitmaps[i] = null;
+			}
+		} catch (OutOfMemoryError e) {
+			Toast t = Toast.makeText(game.getContext(), "Woops! While loading the images, you ran out of memory!", Toast.LENGTH_LONG);
+			t.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 0);
+			t.show();
+			Intent i = new Intent(game.getContext(), GameActivity.class);
+			game.getActivity().startActivity(i);
+			game.stop();
+		}
+
 		x = game.getPaddingX();
 		y = game.getPaddingY();
-		
-		for(int i = 0; i < this.bitmaps.length; i++) {
-			this.bitmaps[i] = Bitmap.createScaledBitmap(this.bitmaps[i], width, height, true);
-		}
 	}
 
 	public void tick() {
@@ -52,6 +60,8 @@ public class Image {
 		if (index > 23) index = 23;
 		bitmap = getBitmap(index + 1);
 		bitmap2 = getBitmap(index);
+
+		if (index + 2 < bitmaps.length) bitmaps[index + 2] = null;
 	}
 
 	public void render(Canvas screen) {
@@ -81,5 +91,9 @@ public class Image {
 
 	public int getHeight() {
 		return height;
+	}
+	
+	public void recycleBitmaps() {
+		bitmaps = null;
 	}
 }

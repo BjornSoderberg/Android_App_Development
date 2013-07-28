@@ -46,6 +46,14 @@ public class Button {
 	public int getY() {
 		return y;
 	}
+	
+	public int getOriginX() {
+		return xOrigin;
+	}
+
+	public int getOriginY() {
+		return yOrigin;
+	}
 
 	public int getWidth() {
 		return width;
@@ -91,5 +99,14 @@ public class Button {
 	public void setTouchXY(int x, int y) {
 		xTouch = x;
 		yTouch = y;
+	}
+
+	public void setXY(int x, int y) {
+		this.x = x;
+		this.y = y;
+	}
+	
+	public void recycleBitmaps() {
+		bitmap = null;
 	}
 }

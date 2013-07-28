@@ -20,15 +20,17 @@ public class OnTouchHandler implements OnTouchListener {
 
 	public boolean onTouch(View v, MotionEvent e) {
 
+		Log.i("HOME - Touch Handler", "Touched");
+		
 		x = (int) e.getX();
 		y = (int) e.getY();
 
 		if (e.getAction() == MotionEvent.ACTION_UP) {
 			for (Button b : home.getButtons()) {
-				if (b.getRect().intersect(x, y, x, y)) {
-					b.onClick();
-				}
 				if (b.isGrabbed()) {
+					if (b.getRect().intersect(x, y, x, y)) {
+						b.onClick();
+					}
 					b.release();
 				}
 			}
@@ -48,10 +50,10 @@ public class OnTouchHandler implements OnTouchListener {
 				}
 			}
 		}
-		
-		if(e.getAction() == MotionEvent.ACTION_MOVE) {
-			for(Button b : home.getButtons()) {
-				if(b.isGrabbed()) {
+
+		if (e.getAction() == MotionEvent.ACTION_MOVE) {
+			for (Button b : home.getButtons()) {
+				if (b.isGrabbed()) {
 					b.setTouchXY(x, y);
 				}
 			}

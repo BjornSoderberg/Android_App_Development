@@ -80,11 +80,6 @@ public class LetterButton extends GameButton {
 		this.c = c;
 	}
 
-	public void setXY(int x, int y) {
-		this.x = x - bitmap.getWidth() / 2;
-		this.y = y - bitmap.getHeight() / 2;
-	}
-
 	protected boolean isMoveable() {
 		return true;
 	}
