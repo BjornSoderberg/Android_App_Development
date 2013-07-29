@@ -59,14 +59,17 @@ public class Home extends SurfaceView implements Runnable, Callback {
 
 	public synchronized void stop() {
 		running = false;
-		recycle();
 
-		try {
-			thread.join();
-		} catch (InterruptedException e) {
+		boolean retry = true;
+		while (retry) {
+			try {
+				thread.join();
+				retry = false;
+			} catch (InterruptedException e) {
+			}
 		}
 
-		thread = null;
+		recycle();
 	}
 
 	public void run() {
@@ -141,8 +144,6 @@ public class Home extends SurfaceView implements Runnable, Callback {
 		Intent intent = new Intent(getContext(), GameActivity.class);
 
 		activity.startActivity(intent);
-		// activity.overridePendingTransition(android.R.anim.fade_in,
-		// android.R.anim.fade_out);
 
 		running = false;
 	}
@@ -175,6 +176,9 @@ public class Home extends SurfaceView implements Runnable, Callback {
 			}
 			buttons = null;
 		}
+
+		screen = null;
+		thread = null;
 	}
 
 }

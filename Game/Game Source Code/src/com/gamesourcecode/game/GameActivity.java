@@ -46,10 +46,16 @@ public class GameActivity extends Activity {
 		loader.execute(this);
 
 	}
+	
+	protected void onResume() {
+		super.onResume();
+		if(game != null) game.resume();
+	}
 
 	protected void onPause() {
 		super.onPause();
 		Log.i("GAME", "PAUSED");
+		if(game != null) game.pause();
 	}
 
 	protected void onStop() {
@@ -188,6 +194,7 @@ public class GameActivity extends Activity {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
+
 		}
 	}
 }

@@ -53,6 +53,10 @@ public class HomeActivity extends Activity {
 	
 	protected void onStart() {
 		Log.i("HOME", "STARTED");
+		if(home == null) {
+			home = new Home(this, this);
+			setContentView(home);
+		}
 		super.onStart();
 	}
 	

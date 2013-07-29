@@ -1,5 +1,6 @@
 package com.gamesourcecode.game.input;
 
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -21,6 +22,8 @@ public class OnTouchHandler implements OnTouchListener {
 
 		x = (int) e.getX();
 		y = (int) e.getY();
+		
+		Log.i("HOME - Touch Handler", "Touched");
 
 		if (e.getAction() == MotionEvent.ACTION_UP) {
 			for (GameButton b : game.getButtons()) {

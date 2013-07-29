@@ -54,9 +54,11 @@ public class Game extends SurfaceView implements Runnable, Callback {
 	private List<GameButton> buttons;
 	private List<GameButton> miscButtons;
 
-	private boolean running = false;
+	private boolean running = false, paused = false;
 	private boolean guessedRight = false;
 	private boolean surfaceDestroyed = false;
+
+	Object pauseLock = new Object();
 
 	// Just for testing
 	int color = 0x44;
@@ -113,11 +115,28 @@ public class Game extends SurfaceView implements Runnable, Callback {
 		running = false;
 		recycle();
 
-		try {
-			thread.join();
-		} catch (InterruptedException e) {
+		boolean retry = true;
+		while (retry) {
+			try {
+				thread.join();
+				retry = false;
+			} catch (InterruptedException e) {
+			}
 		}
 
+	}
+
+	public void pause() {
+		synchronized (pauseLock) {
+			paused = true;
+		}
+	}
+
+	public void resume() {
+		synchronized (pauseLock) {
+			paused = false;
+			pauseLock.notifyAll();
+		}
 	}
 
 	public void run() {
@@ -141,6 +160,15 @@ public class Game extends SurfaceView implements Runnable, Callback {
 				render();
 				delta--;
 				currentTime = (SystemClock.uptimeMillis() - startTime) / 1000;
+			}
+
+			synchronized (pauseLock) {
+				while (paused) {
+					try {
+						pauseLock.wait();
+					} catch (InterruptedException e) {
+					}
+				}
 			}
 		}
 
@@ -171,6 +199,7 @@ public class Game extends SurfaceView implements Runnable, Callback {
 
 		// /////// STARTING HOME ACTIVITY WHEN THE WORD IS CORRECT
 		if (guessedRight) {
+			render();
 			try {
 				Thread.sleep(2000);
 			} catch (InterruptedException e) {
@@ -204,35 +233,30 @@ public class Game extends SurfaceView implements Runnable, Callback {
 
 		try {
 			screen = holder.lockCanvas();
-		} catch (IllegalArgumentException e) {
 
-		}
+			if (screen == null) return;
 
-		if (screen == null) return;
+			screen.drawRGB(color, color, color);
 
-		screen.drawRGB(color, color, color);
+			if (image != null) image.render(screen);
 
-		if (image != null) image.render(screen);
+			Paint alpha = new Paint();
+			alpha.setAlpha(180);
 
-		Paint alpha = new Paint();
-		alpha.setAlpha(180);
+			// Renders the grabbed button last (so that it will be over the
+			// other
+			// buttons)
+			for (GameButton b : getButtons()) {
+				if (!b.isGrabbed() && screen != null) b.render(screen, null);
 
-		// Renders the grabbed button last (so that it will be over the
-		// other
-		// buttons)
-		for (GameButton b : getButtons()) {
-			if (!b.isGrabbed() && screen != null) b.render(screen, null);
+			}
 
-		}
+			for (GameButton b : getButtons()) {
+				if (b.isGrabbed() && screen != null) b.render(screen, alpha);
+			}
+		} finally {
 
-		for (GameButton b : getButtons()) {
-			if (b.isGrabbed() && screen != null) b.render(screen, alpha);
-		}
-
-		try {
-			// if (screen != null)
-			holder.unlockCanvasAndPost(screen);
-		} catch (IllegalArgumentException e) {
+			if (screen != null) holder.unlockCanvasAndPost(screen);
 
 		}
 	}

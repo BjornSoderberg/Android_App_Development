@@ -39,7 +39,6 @@ public class Image {
 			t.show();
 			Intent i = new Intent(game.getContext(), GameActivity.class);
 			game.getActivity().startActivity(i);
-			game.stop();
 		}
 
 		x = game.getPaddingX();
