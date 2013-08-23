@@ -60,7 +60,7 @@ public class Image {
 		bitmap = getBitmap(index + 1);
 		bitmap2 = getBitmap(index);
 
-		if (index + 2 < bitmaps.length) bitmaps[index + 2] = null;
+		if (index + 2 < bitmaps.length) bitmaps[index + 2].recycle();
 	}
 
 	public void render(Canvas screen) {
@@ -93,6 +93,9 @@ public class Image {
 	}
 	
 	public void recycleBitmaps() {
+		for(int i = 0; i < bitmaps.length; i++) {
+			if(!bitmaps[i].isRecycled()) bitmaps[i].recycle();
+		}
 		bitmaps = null;
 	}
 }

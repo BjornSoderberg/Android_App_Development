@@ -23,7 +23,6 @@ import com.gamesourcecode.button.game.GameButton;
 import com.gamesourcecode.button.game.LetterButton;
 import com.gamesourcecode.button.game.WordButton;
 import com.gamesourcecode.game.gfx.Image;
-import com.gamesourcecode.game.input.OnTouchHandler;
 import com.gamesourcecode.home.HomeActivity;
 
 public class Game extends SurfaceView implements Runnable, Callback {
@@ -34,7 +33,7 @@ public class Game extends SurfaceView implements Runnable, Callback {
 	private final Random random = new Random();
 
 	private Image image;
-	private OnTouchHandler motion;
+	private OnTouchHandler touch;
 	private GameActivity activity;
 
 	private int letterButtonCols = 7, letterButtonRows = 2;
@@ -96,8 +95,8 @@ public class Game extends SurfaceView implements Runnable, Callback {
 		}
 
 		image = new Image(this, bitmaps, WIDTH);
-		motion = new OnTouchHandler(this);
-		setOnTouchListener(motion);
+		touch = new OnTouchHandler(this);
+		setOnTouchListener(touch);
 
 		initButtons();
 		start();
@@ -124,6 +123,7 @@ public class Game extends SurfaceView implements Runnable, Callback {
 			}
 		}
 
+		activity.finish();
 	}
 
 	public void pause() {
@@ -133,6 +133,7 @@ public class Game extends SurfaceView implements Runnable, Callback {
 	}
 
 	public void resume() {
+		setOnTouchListener(touch);
 		synchronized (pauseLock) {
 			paused = false;
 			pauseLock.notifyAll();
@@ -197,7 +198,7 @@ public class Game extends SurfaceView implements Runnable, Callback {
 			string += b.getChar();
 		}
 
-		// /////// STARTING HOME ACTIVITY WHEN THE WORD IS CORRECT
+		// /////// STARTING GAME ACTIVITY WHEN THE WORD IS CORRECT
 		if (guessedRight) {
 			render();
 			try {

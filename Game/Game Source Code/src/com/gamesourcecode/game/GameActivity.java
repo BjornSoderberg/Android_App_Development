@@ -17,6 +17,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -28,6 +29,7 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import com.gamesourcecode.home.HomeActivity;
+import com.gamesourcecode.login.LoginActivity;
 
 public class GameActivity extends Activity {
 
@@ -46,16 +48,16 @@ public class GameActivity extends Activity {
 		loader.execute(this);
 
 	}
-	
+
 	protected void onResume() {
 		super.onResume();
-		if(game != null) game.resume();
+		if (game != null) game.resume();
 	}
 
 	protected void onPause() {
 		super.onPause();
 		Log.i("GAME", "PAUSED");
-		if(game != null) game.pause();
+		if (game != null) game.pause();
 	}
 
 	protected void onStop() {
@@ -63,15 +65,19 @@ public class GameActivity extends Activity {
 		Log.i("GAME", "STOPPED");
 	}
 
+	protected void onRestart() {
+		super.onRestart();
+		Log.i("GAME", "RESTARTED");
+		Log.i("GAME", "STARTING HOME ACTIVITY");
+		Intent i = new Intent(this, HomeActivity.class);
+		game.setRunning(false);
+		startActivity(i);
+
+	}
+	
 	protected void onStart() {
 		super.onStart();
 		Log.i("GAME", "STARTED");
-		if (game != null) {
-			Log.i("GAME", "STARTING HOME ACTIVITY");
-			Intent i = new Intent(this, HomeActivity.class);
-			game.setRunning(false);
-			startActivity(i);
-		}
 	}
 
 	protected void onDestroy() {
@@ -101,12 +107,18 @@ public class GameActivity extends Activity {
 
 		private GameActivity activity;
 
+		ProgressDialog pDialog;
+		
 		protected void onPreExecute() {
 			super.onPreExecute();
+			pDialog = new ProgressDialog(GameActivity.this);
+			pDialog.setMessage("Loading images...");
+			pDialog.setIndeterminate(false);
+			pDialog.setCancelable(false);
+			pDialog.show();
 		}
 
 		protected Bitmap[] doInBackground(GameActivity... params) {
-
 			initWordAndLink();
 
 			activity = params[0];
@@ -123,6 +135,7 @@ public class GameActivity extends Activity {
 		protected void onPostExecute(Bitmap[] result) {
 			super.onPostExecute(result);
 
+			pDialog.dismiss();
 			game = new Game(activity, activity, result, word);
 
 			activity.setContentView(game);

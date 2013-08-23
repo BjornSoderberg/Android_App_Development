@@ -16,10 +16,10 @@
 	
 	do {
 		// Random index in database
-		$index = rand(1, $length);
+		$index = rand(0, $length);
 		
 		$query = "
-			SELECT name FROM images WHERE id = $index
+			SELECT name, link FROM images WHERE id = $index
 		";
 		
 		$result = mysql_query($query);

@@ -10,7 +10,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.SystemClock;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
@@ -18,13 +17,12 @@ import android.view.SurfaceView;
 import com.gamesourcecode.R;
 import com.gamesourcecode.button.Button;
 import com.gamesourcecode.game.GameActivity;
-import com.gamesourcecode.home.input.OnTouchHandler;
 
 public class Home extends SurfaceView implements Runnable, Callback {
 	private SurfaceHolder holder;
 	private Thread thread;
 	private Canvas screen;
-	private OnTouchHandler motion;
+	private OnTouchHandler touch;
 
 	private List<Button> buttons;
 
@@ -40,7 +38,7 @@ public class Home extends SurfaceView implements Runnable, Callback {
 		holder = getHolder();
 		holder.addCallback(this);
 
-		motion = new OnTouchHandler(this);
+		touch = new OnTouchHandler(this);
 
 		initButtons();
 
@@ -51,7 +49,7 @@ public class Home extends SurfaceView implements Runnable, Callback {
 		running = true;
 		surfaceDestroyed = false;
 
-		setOnTouchListener(motion);
+		setOnTouchListener(touch);
 
 		thread = new Thread(this, "Home");
 		thread.start();
@@ -70,6 +68,8 @@ public class Home extends SurfaceView implements Runnable, Callback {
 		}
 
 		recycle();
+
+		activity.finish();
 	}
 
 	public void run() {
@@ -124,26 +124,36 @@ public class Home extends SurfaceView implements Runnable, Callback {
 
 	private void initButtons() {
 		buttons = new ArrayList<Button>();
-		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.startgame);
+		Bitmap startImage = BitmapFactory.decodeResource(getResources(), R.drawable.startgame);
+		Bitmap logoutImage = BitmapFactory.decodeResource(getResources(), R.drawable.logout);
 
 		int width = (int) (activity.getWidth() * 0.8);
-		int height = width * bitmap.getHeight() / bitmap.getWidth();
+		int height = width * startImage.getHeight() / startImage.getWidth();
 
-		Button start = new Button((activity.getWidth() - width) / 2, (activity.getHeight() - height) / 2, width, height, bitmap) {
+		Button start = new Button((activity.getWidth() - width) / 2, (activity.getHeight() - height - (int) (height * 1.1)) / 2, width, height, startImage) {
 			public void onClick() {
-				startGame();
+				startIntent(GameActivity.class);
+			}
+		};
+
+		Button logout = new Button((activity.getWidth() - width) / 2, (activity.getHeight() - height + (int) (height * 1.1)) / 2, width, height, logoutImage) {
+			public void onClick() {
+				activity.getSession().logoutUser();
+				activity.getSession().checkLogin();
 			}
 		};
 
 		buttons.add(start);
+		buttons.add(logout);
 	}
 
-	private void startGame() {
+	private void startIntent(Class<?> c) {
 		render();
 
-		Intent intent = new Intent(getContext(), GameActivity.class);
+		Intent intent = new Intent(getContext(), c);
 
 		activity.startActivity(intent);
+		//activity.overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
 
 		running = false;
 	}

@@ -26,10 +26,6 @@ public class GameButton extends Button {
 		grabbed = false;
 	}
 
-	public void onClick() {
-
-	}
-
 	public void tick() {
 		if (reset) {
 			reset = false;

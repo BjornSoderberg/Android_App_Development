@@ -25,10 +25,17 @@ public class LetterButton extends GameButton {
 	public void render(Canvas screen, Paint paint) {
 		// If the button is grabbed, an empty button is displayed on its
 		// original location
-		Paint p = (getRect().intersect(getOriginRect())) ? paint : null;
-		if (grabbed) screen.drawBitmap(game.getEmptyBitmap(width, height), xOrigin, yOrigin, p);
+		// p = (getRect().intersect(getOriginRect())) ? paint : null;
+		if (containsLetter) super.render(screen, paint);
 
-		super.render(screen, paint);
+		// Old way of doing it:
+		/*
+		 * Paint p = (getRect().intersect(getOriginRect())) ? paint : null; if
+		 * (grabbed) screen.drawBitmap(game.getEmptyBitmap(width, height),
+		 * xOrigin, yOrigin, paint);
+		 * 
+		 * super.render(screen, paint);
+		 */
 	}
 
 	public void onClick() {
@@ -38,7 +45,7 @@ public class LetterButton extends GameButton {
 				if (!b.containsLetter()) {
 					b.setChar(c);
 					containsLetter = false;
-					bitmap = game.getEmptyBitmap(width, height);
+					// bitmap = game.getEmptyBitmap(width, height);
 					break;
 				}
 			}
@@ -83,7 +90,7 @@ public class LetterButton extends GameButton {
 	protected boolean isMoveable() {
 		return true;
 	}
-	
+
 	public void release() {
 		super.release();
 		hasBeenOutside = false;

@@ -38,6 +38,39 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        
+        <activity
+            android:name="com.gamesourcecode.game.StartGameActivity"
+            android:label="@string/app_name"
+            android:screenOrientation = "portrait" >
+            <intent-filter>
+                <action android:name="com.gamesourcecode.game.STARTGAMEACTIVITY" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+        <activity
+            android:name="com.gamesourcecode.login.LoginActivity"
+            android:label="@string/app_name"
+            android:screenOrientation = "portrait" >
+            <intent-filter>
+                <action android:name="com.gamesourcecode.login.LOGINACTIVITY" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+        <activity
+            android:name="com.gamesourcecode.register.RegisterActivity"
+            android:label="@string/app_name"
+            android:screenOrientation = "portrait" >
+            <intent-filter>
+                <action android:name="com.gamesourcecode.register.REGISTERACTIVITY" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
     </application>
 

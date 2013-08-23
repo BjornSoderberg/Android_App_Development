@@ -25,11 +25,9 @@ public class Button {
 	}
 
 	public void render(Canvas screen, Paint paint) {
-		if (isMoveable()) screen.drawBitmap(bitmap, x, y, paint);
-		else {
-			if (getOriginRect().intersect(xTouch, yTouch, xTouch, yTouch)) screen.drawBitmap(bitmap, x, y, paint);
-			else screen.drawBitmap(bitmap, x, y, null);
-		}
+		if (getOriginRect().intersect(xTouch, yTouch, xTouch, yTouch) || isMoveable()) screen.drawBitmap(bitmap, x, y, paint);
+		else screen.drawBitmap(bitmap, x, y, null);
+
 	}
 
 	public void onClick() {
@@ -46,7 +44,7 @@ public class Button {
 	public int getY() {
 		return y;
 	}
-	
+
 	public int getOriginX() {
 		return xOrigin;
 	}
@@ -95,7 +93,7 @@ public class Button {
 	protected boolean isMoveable() {
 		return false;
 	}
-	
+
 	public void setTouchXY(int x, int y) {
 		xTouch = x;
 		yTouch = y;
@@ -105,7 +103,7 @@ public class Button {
 		this.x = x;
 		this.y = y;
 	}
-	
+
 	public void recycleBitmaps() {
 		bitmap = null;
 	}
