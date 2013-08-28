@@ -93,7 +93,7 @@ public class RegisterActivity extends Activity implements OnClickListener {
 
 				JSONObject json = jsonParser.makeHttpRequest(URL, "POST", params);
 
-				Log.i("REGISTER - Create User", json.toString());
+				Log.i("REGISTER - Create User", json.toString() + "");
 
 				success = json.getInt(TAG_SUCCESS);
 				if (success == 1) {
@@ -117,9 +117,8 @@ public class RegisterActivity extends Activity implements OnClickListener {
 
 		protected void onPostExcecute(String toastMessage) {
 			pDialog.dismiss();
-			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-			imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-			imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+			InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+			mgr.hideSoftInputFromWindow(user.getWindowToken(), 0);
 
 			if (toastMessage != null) Toast.makeText(RegisterActivity.this, toastMessage, Toast.LENGTH_LONG).show();
 		}

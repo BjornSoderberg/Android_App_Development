@@ -23,6 +23,7 @@ public class SessionManager {
 	// Keys for setting and getting preferences
 	public static final String KEY_USERNAME = "username";
 	public static final String KEY_IS_LOGGED_IN = "isLoggedIn";
+	public static final String KEY_GAME = "game";
 	
 	public SessionManager(Context context) {
 		this.context = context;
@@ -56,7 +57,7 @@ public class SessionManager {
 	public HashMap<String, String> getUserDetails() {
 		HashMap<String, String> user = new HashMap<String, String>();
 		user.put(KEY_USERNAME, preferences.getString(KEY_USERNAME, null));
-		
+
 		return user;
 	}
 	

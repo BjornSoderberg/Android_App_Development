@@ -1,21 +1,24 @@
 package com.gamesourcecode.home;
 
-import java.util.HashMap;
-
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Toast;
+import android.widget.Button;
 
+import com.gamesourcecode.R;
 import com.gamesourcecode.misc.SessionManager;
+import com.gamesourcecode.startgame.StartGameActivity;
 
-public class HomeActivity extends Activity {
+public class HomeActivity extends Activity implements OnClickListener {
 
-	private Home home;
 	private SessionManager session;
+
+	private Button startGame, logout;
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -23,20 +26,32 @@ public class HomeActivity extends Activity {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-		session = new SessionManager(getApplicationContext());
+		session = new SessionManager(this);
 		// Redirects the user to the login activity if he is not logged in
 		session.checkLogin();
 
 		if (session.isLoggedIn()) {
-			HashMap<String, String> user = session.getUserDetails();
+			setContentView(R.layout.home);
 
-			String username = user.get(SessionManager.KEY_USERNAME);
-			Toast.makeText(getApplicationContext(), "Welcome " + username + "! You are logged in", Toast.LENGTH_LONG).show();
-
-			home = new Home(this, this);
-			setContentView(home);
+			startGame = (Button) findViewById(R.id.startGame);
+			startGame.setOnClickListener(this);
+			
+			logout = (Button) findViewById(R.id.logout);
+			logout.setOnClickListener(this);
 
 			Log.i("HOME", "CREATED");
+		}
+	}
+
+	public void onClick(View v) {
+		if(v.getId() == R.id.startGame) {
+			Intent intent = new Intent(HomeActivity.this, StartGameActivity.class);
+			startActivity(intent);
+		}
+		if(v.getId() == R.id.logout) {
+			session.logoutUser();
+			session.checkLogin();
+			Log.i("HOME - ON CLICK", "Logged out");
 		}
 	}
 
@@ -47,10 +62,8 @@ public class HomeActivity extends Activity {
 
 	protected void onResume() {
 		super.onResume();
-		setContentView(home);
 
 		Log.i("HOME", "RESUMED");
-		home.start();
 	}
 
 	protected void onStop() {
@@ -65,36 +78,6 @@ public class HomeActivity extends Activity {
 
 	protected void onStart() {
 		Log.i("HOME", "STARTED");
-		if (home == null) {
-			home = new Home(this, this);
-			setContentView(home);
-		}
 		super.onStart();
-	}
-
-	protected void onDestroy() {
-		super.onDestroy();
-		home.stop();
-		home = null;
-		finish();
-	}
-
-	public void onBackPressed() {
-	}
-
-	public int getWidth() {
-		DisplayMetrics dm = new DisplayMetrics();
-		getWindowManager().getDefaultDisplay().getMetrics(dm);
-		return dm.widthPixels;
-	}
-
-	public int getHeight() {
-		DisplayMetrics dm = new DisplayMetrics();
-		getWindowManager().getDefaultDisplay().getMetrics(dm);
-		return dm.heightPixels;
-	}
-
-	public SessionManager getSession() {
-		return session;
 	}
 }

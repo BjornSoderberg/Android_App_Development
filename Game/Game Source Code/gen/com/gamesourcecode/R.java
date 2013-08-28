@@ -58,21 +58,35 @@ public final class R {
         public static final int z=0x7f020022;
     }
     public static final class id {
-        public static final int email=0x7f080006;
-        public static final int login=0x7f080004;
-        public static final int password=0x7f080003;
-        public static final int password1=0x7f080008;
-        public static final int password2=0x7f08000a;
-        public static final int register=0x7f080005;
-        public static final int textView1=0x7f080000;
-        public static final int textView2=0x7f080002;
-        public static final int textView3=0x7f080007;
-        public static final int textView4=0x7f080009;
-        public static final int username=0x7f080001;
+        public static final int email=0x7f08000e;
+        public static final int linear=0x7f080015;
+        public static final int login=0x7f08000c;
+        public static final int logout=0x7f080007;
+        public static final int mLinear=0x7f080001;
+        public static final int mScore=0x7f080002;
+        public static final int oLinear=0x7f080004;
+        public static final int oScore=0x7f080005;
+        public static final int password=0x7f08000b;
+        public static final int password1=0x7f080010;
+        public static final int password2=0x7f080012;
+        public static final int play=0x7f080003;
+        public static final int register=0x7f08000d;
+        public static final int scrollView=0x7f080014;
+        public static final int startGame=0x7f080006;
+        public static final int startRandomGame=0x7f080013;
+        public static final int textView1=0x7f080008;
+        public static final int textView2=0x7f08000a;
+        public static final int textView3=0x7f08000f;
+        public static final int textView4=0x7f080011;
+        public static final int title=0x7f080000;
+        public static final int username=0x7f080009;
     }
     public static final class layout {
-        public static final int login=0x7f030000;
-        public static final int register=0x7f030001;
+        public static final int gameoverview=0x7f030000;
+        public static final int home=0x7f030001;
+        public static final int login=0x7f030002;
+        public static final int register=0x7f030003;
+        public static final int startgame=0x7f030004;
     }
     public static final class raw {
         public static final int androidlogo=0x7f040000;

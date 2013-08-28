@@ -40,11 +40,22 @@
         </activity>
         
         <activity
-            android:name="com.gamesourcecode.game.StartGameActivity"
+            android:name="com.gamesourcecode.startgame.StartGameActivity"
             android:label="@string/app_name"
             android:screenOrientation = "portrait" >
             <intent-filter>
-                <action android:name="com.gamesourcecode.game.STARTGAMEACTIVITY" />
+                <action android:name="com.gamesourcecode.startgame.STARTGAMEACTIVITY" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+        <activity
+            android:name="com.gamesourcecode.gameoverview.GameOverviewActivity"
+            android:label="@string/app_name"
+            android:screenOrientation = "portrait" >
+            <intent-filter>
+                <action android:name="com.gamesourcecode.gameoverview.GAMEOVERVIEWACTIVITY" />
 
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>

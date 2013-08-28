@@ -1,7 +1,7 @@
 <?php 
 
-    // First we execute our common code to connection to the database and start the session 
-    require("config.inc.php"); 
+    // First we execute our common code to connection to the database and start the session 	
+    require("config.inc.php");
      
     // This if statement checks to determine whether the registration form has been submitted 
     // If it has, then the registration code is run, otherwise the form is displayed 
@@ -198,11 +198,18 @@
         } 
          
         
+		
+		
             $response["success"] = 1;
 			$response["message"] = "You Successfully Registered And Are Now Logged In!";
 			$response["username"] = $_POST["username"];
+			$response["username"] = $_POST["username"];
             die(json_encode($response)); 
-    } 
+    } else {
+		$response["success"] = 0;
+		$response["message"] = "You have not entered valid information!";
+        die(json_encode($response)); 
+	}
      
 ?> 
 <h1>Register</h1> 

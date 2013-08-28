@@ -59,15 +59,15 @@
             // Using the password submitted by the user and the salt stored in the database, 
             // we now check to see whether the passwords match by hashing the submitted password 
             // and comparing it to the hashed version already stored in the database.
-////////////////////////////////////////																					NO ENCRYPTION AT THE MOMENT!		#################	
-            //$check_password = hash('sha256', $_POST['password'] . $row['salt']);
-            //for($round = 0; $round < 65536; $round++) 
-            //{ 
-            //    $check_password = hash('sha256', $check_password . $row['salt']); 
-            //} 
+			
+            $check_password = hash('sha256', $_POST['password'] . $row['salt']);
+            for($round = 0; $round < 65536; $round++) 
+            { 
+                $check_password = hash('sha256', $check_password . $row['salt']); 
+            } 
              
-            //if($check_password === $row['password']) 
-			if($_POST['password'] === $row['password'])
+            if($check_password === $row['password']) 
+			//if($_POST['password'] === $row['password'])
             { 
                 // If they do, then we flip this to true 
                 $login_ok = true; 

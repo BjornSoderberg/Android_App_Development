@@ -4,18 +4,26 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.os.AsyncTask;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
+import android.widget.Toast;
 
 import com.gamesourcecode.R;
 import com.gamesourcecode.button.Button;
@@ -24,6 +32,7 @@ import com.gamesourcecode.button.game.LetterButton;
 import com.gamesourcecode.button.game.WordButton;
 import com.gamesourcecode.game.gfx.Image;
 import com.gamesourcecode.home.HomeActivity;
+import com.gamesourcecode.misc.JSONParser;
 
 public class Game extends SurfaceView implements Runnable, Callback {
 
@@ -58,6 +67,11 @@ public class Game extends SurfaceView implements Runnable, Callback {
 	private boolean surfaceDestroyed = false;
 
 	Object pauseLock = new Object();
+	
+	private int gameID, mIndex;
+	private static final String URL_GAME_FINISHED = "http://192.168.60.49/android/database/gamefinished.php";
+	private String TAG_SUCCESS = "success";
+	private String TAG_MESSAGE = "message";
 
 	// Just for testing
 	int color = 0x44;
@@ -69,6 +83,9 @@ public class Game extends SurfaceView implements Runnable, Callback {
 
 		holder = getHolder();
 		holder.addCallback(this);
+		
+		gameID = activity.getIntent().getExtras().getInt("id");
+		mIndex = activity.getIntent().getExtras().getInt("mIndex");
 
 		if (activity.getWidth() * WHRatio > activity.getHeight()) {
 			HEIGHT = (int) (activity.getHeight() * 0.9);
@@ -177,7 +194,6 @@ public class Game extends SurfaceView implements Runnable, Callback {
 	}
 
 	private void tick() {
-		// Log.i("GAME", "Tick");
 
 		for (Button b : getButtons()) {
 			b.tick();
@@ -201,14 +217,7 @@ public class Game extends SurfaceView implements Runnable, Callback {
 		// /////// STARTING GAME ACTIVITY WHEN THE WORD IS CORRECT
 		if (guessedRight) {
 			render();
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			// Relaunches the game activity
-			Intent i = new Intent(activity, GameActivity.class);
-			activity.startActivity(i);
+			new GameFinished().execute();
 			stop();
 			return;
 		}
@@ -540,4 +549,67 @@ public class Game extends SurfaceView implements Runnable, Callback {
 	public Activity getActivity() {
 		return activity;
 	}
+	
+	
+	class GameFinished extends AsyncTask<String, String, String> {
+
+		int success;
+		ProgressDialog pDialog;
+		JSONObject json;
+		JSONParser jsonParser = new JSONParser();
+
+		protected void onPreExecute() {
+			super.onPreExecute();
+
+//			pDialog = new ProgressDialog(activity.getBaseContext());
+//			pDialog.setMessage("Creating User...");
+//			pDialog.setIndeterminate(false);
+//			pDialog.setCancelable(false);
+//			pDialog.show();
+		}
+
+		protected String doInBackground(String... string) {
+			try {
+				List<NameValuePair> params = new ArrayList<NameValuePair>();
+				params.add(new BasicNameValuePair("id", Integer.toString(gameID)));
+				params.add(new BasicNameValuePair("index", mIndex + ""));
+				params.add(new BasicNameValuePair("score", currentTime * 100 + ""));
+				
+				Log.i("GAME - UPDATE GAMES", params.toString());
+
+				json = jsonParser.makeHttpRequest(URL_GAME_FINISHED, "POST", params);
+				
+				Log.i("GAME - URL", URL_GAME_FINISHED);
+
+				Log.i("GAME - attempt", json.toString());
+
+				success = json.getInt(TAG_SUCCESS);
+
+				if (success == 1) {
+					Log.i("GAME", "Games updated!");
+
+					return json.toString();
+				} else {
+					Log.i("GAME", "Failed to create game!");
+					return json.getString(TAG_MESSAGE);
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+			super.onPostExecute(result);			
+			Log.i("GAME - UPDATED FINISHED GAME", result);
+			
+			// Here the new score should be sent as an "extra"
+			activity.setResult(Activity.RESULT_OK);
+			activity.finish();
+		}
+	}
+	
+	
 }

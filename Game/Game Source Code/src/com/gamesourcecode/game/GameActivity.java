@@ -29,7 +29,6 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import com.gamesourcecode.home.HomeActivity;
-import com.gamesourcecode.login.LoginActivity;
 
 public class GameActivity extends Activity {
 

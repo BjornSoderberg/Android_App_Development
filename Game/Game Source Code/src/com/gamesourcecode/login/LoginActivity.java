@@ -83,6 +83,7 @@ public class LoginActivity extends Activity implements OnClickListener {
 	class AttemptLogin extends AsyncTask<String, String, String> {
 
 		int success;
+		String username, password;
 
 		protected void onPreExecute() {
 			super.onPreExecute();
@@ -90,13 +91,13 @@ public class LoginActivity extends Activity implements OnClickListener {
 			pDialog = new ProgressDialog(LoginActivity.this);
 			pDialog.setMessage("Attempting login...");
 			pDialog.setIndeterminate(false);
-			pDialog.setCancelable(true);
+			pDialog.setCancelable(false);
 			pDialog.show();
 		}
 
 		protected String doInBackground(String... strings) {
-			String username = user.getText().toString();
-			String password = pass.getText().toString();
+			username = user.getText().toString();
+			password = pass.getText().toString();
 
 			try {
 				List<NameValuePair> params = new ArrayList<NameValuePair>();
@@ -106,7 +107,7 @@ public class LoginActivity extends Activity implements OnClickListener {
 				JSONObject json = jsonParser.makeHttpRequest(URL, "POST", params);
 
 				Log.i("LOGIN - attempt", json.toString());
-
+				
 				success = json.getInt(TAG_SUCCESS);
 
 				if (success == 1) {
@@ -125,16 +126,20 @@ public class LoginActivity extends Activity implements OnClickListener {
 				e.printStackTrace();
 			}
 
-			return null;
+			return "Oop! Something went wrong!";
 		}
 
 		protected void onPostExecute(String toastMessage) {
 			pDialog.dismiss();
-			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-			imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-			imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
 
-			if (toastMessage != null && success == 0) Toast.makeText(LoginActivity.this, toastMessage, Toast.LENGTH_LONG).show();
+			InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+			mgr.hideSoftInputFromWindow(user.getWindowToken(), 0);
+
+			if (toastMessage != null) {
+				Toast.makeText(LoginActivity.this, toastMessage, Toast.LENGTH_LONG).show();
+				if(success == 1) 
+					Toast.makeText(getApplicationContext(), "Welcome " + username + "! You are logged in", Toast.LENGTH_LONG).show();
+			}
 		}
 
 	}
