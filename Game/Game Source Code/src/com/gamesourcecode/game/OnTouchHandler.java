@@ -18,11 +18,11 @@ public class OnTouchHandler implements OnTouchListener {
 	}
 
 	public boolean onTouch(View v, MotionEvent e) {
-
+		
 		x = (int) e.getX();
 		y = (int) e.getY();
 		
-		Log.i("HOME - Touch Handler", "Touched");
+		//Log.i("HOME - Touch Handler", "Touched");
 
 		if (e.getAction() == MotionEvent.ACTION_UP) {
 			for (GameButton b : game.getButtons()) {

@@ -32,23 +32,11 @@
 		
 		if($rows) {
 			for ($i = 0; $i < count($rows); $i++) {
-				if($rows[$i]['username1'] === "Lol") $opponent = $rows[$i]['username2'];
-				else $opponent = $rows[$i]['username1'];
 				$response["game".$i] = $rows[$i];
-				
 			}
 		}
 		
         die(json_encode($response));
-/*$response["game".$i] = 
-				$opponent						."|".
-				$rows[$i]['game_start_time']	."|".
-				$rows[$i]['last_play_time']		."|".
-				$rows[$i]['turn']				."|".
-				$rows[$i]['score1']				."|".
-				$rows[$i]['score2']				."|".
-				$rows[$i]['game_state']			."|".
-				$rows[$i]['id'];*/
 	
 	
 	

@@ -1,18 +1,13 @@
 package com.gamesourcecode.game;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONArray;
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,13 +23,16 @@ import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.gamesourcecode.gameoverview.GameOverviewActivity;
 import com.gamesourcecode.home.HomeActivity;
+import com.gamesourcecode.misc.JSONParser;
+import com.gamesourcecode.startgame.StartGameActivity;
 
 public class GameActivity extends Activity {
 
 	private String word = "", link = "";
 
-	private Game game = null;
+	private Game game;
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -46,6 +44,13 @@ public class GameActivity extends Activity {
 		LoadBitmaps loader = new LoadBitmaps();
 		loader.execute(this);
 
+	}
+
+	public void startGameOverview(String name, String data) {
+		Intent i = new Intent(this, GameOverviewActivity.class);
+		i.putExtra("jsonString", data);
+		Log.i("Game activity", "starting game overview");
+		startActivity(i);
 	}
 
 	protected void onResume() {
@@ -67,13 +72,20 @@ public class GameActivity extends Activity {
 	protected void onRestart() {
 		super.onRestart();
 		Log.i("GAME", "RESTARTED");
-		Log.i("GAME", "STARTING HOME ACTIVITY");
-		Intent i = new Intent(this, HomeActivity.class);
-		game.setRunning(false);
+		
+		Intent i = new Intent(this, StartGameActivity.class);
 		startActivity(i);
+		
+		new GameFinished().execute();
+		
+//		if (game != null) {
+//			if (game.isRunning()) game.stop();
+//			game = null;
+//		}
+		game.setRunning(false);
 
 	}
-	
+
 	protected void onStart() {
 		super.onStart();
 		Log.i("GAME", "STARTED");
@@ -82,9 +94,8 @@ public class GameActivity extends Activity {
 	protected void onDestroy() {
 		super.onDestroy();
 		Log.i("GAME", "DESTROYED");
-		game.stop();
+		if (game.isRunning()) game.stop();
 		game = null;
-		finish();
 	}
 
 	public void onBackPressed() {
@@ -107,7 +118,7 @@ public class GameActivity extends Activity {
 		private GameActivity activity;
 
 		ProgressDialog pDialog;
-		
+
 		protected void onPreExecute() {
 			super.onPreExecute();
 			pDialog = new ProgressDialog(GameActivity.this);
@@ -162,51 +173,79 @@ public class GameActivity extends Activity {
 			return null;
 		}
 
-		String url = "http://192.168.60.49/android/database/getimage.php";
-
 		private void initWordAndLink() {
-			String result = "";
-			InputStream is = null;
 
+			Intent i = getIntent();
+			word = i.getStringExtra("word");
+			link = i.getStringExtra("link");
+
+		}
+	}
+	
+	class GameFinished extends AsyncTask<String, String, String> {
+
+		int success;
+		JSONObject json;
+		JSONParser jsonParser = new JSONParser();
+
+		protected void onPreExecute() {
+			super.onPreExecute();
+		}
+
+		protected String doInBackground(String... string) {
 			try {
+				
+				List<NameValuePair> params = new ArrayList<NameValuePair>();
+				params.add(new BasicNameValuePair("id", getIntent().getExtras().getInt("id") + ""));
+				params.add(new BasicNameValuePair("index", getIntent().getExtras().getInt("mIndex") + ""));
+				params.add(new BasicNameValuePair("score", Integer.toString(0)));
 
-				HttpClient client = new DefaultHttpClient();
-				HttpPost post = new HttpPost(url);
-				HttpResponse response = client.execute(post);
-				HttpEntity entity = response.getEntity();
-				is = entity.getContent();
+				Log.i("GAME ACTIVITY - Params ", params.toString());
 
-			} catch (ClientProtocolException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+				json = jsonParser.makeHttpRequest(Game.URL_GAME_FINISHED, "POST", params);
 
-			try {
-				BufferedReader reader = new BufferedReader(new InputStreamReader(is, "iso-8859-1"), 8);
-				StringBuilder sb = new StringBuilder();
-				String line = null;
-				while ((line = reader.readLine()) != null) {
-					sb.append(line + "\n");
-				}
+				Log.i("GAME  ACTIVITY- attempt", json.toString());
 
-				is.close();
-				result = sb.toString();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+				success = json.getInt(Game.TAG_SUCCESS);
 
-			try {
-				JSONArray jArray = new JSONArray(result);
-				for (int i = 0; i < jArray.length(); i++) {
-					JSONObject jData = jArray.getJSONObject(i);
-					word = jData.getString("name");
-					link = jData.getString("link");
+				if (success == 1) {
+					Log.i("GAME ACTIVITY", "Games updated!");
+
+					return json.toString();
+				} else {
+					Log.i("GAME ACTIVITY", "Failed to submit score!");
 				}
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
 
+			return null;
+		}
+
+		protected void onPostExecute(String result) {
+			super.onPostExecute(result);
+
+			Log.i("GAME ACTIVITY - UPDATED FINISHED GAME", result + "");
+
+			if (result != null) {
+				try {
+					JSONObject game = json.getJSONObject("game");
+
+					startGameOverview("jsonString", game.toString());
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+			} else {
+				Intent i = new Intent(GameActivity.this, HomeActivity.class);
+				startActivity(i);
+			}
+			
+
+			if (game != null) {
+				if (game.isRunning()) game.stop();
+				game = null;
+			}
 		}
 	}
+	
 }

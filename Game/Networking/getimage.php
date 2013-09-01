@@ -1,42 +1,56 @@
 <?php
-	// Connect to MySQL
-	$connect = mysql_connect("localhost", "root", "david") or die("Error connecting to database");
-	
-	// Select database
-	mysql_select_db("android");
+	require("config.inc.php");
 	
 	
-	$query = "
-		SELECT name FROM images
-	";
-	
-	$result = mysql_query($query);
-	
-	$length = mysql_num_rows($result);
-	
-	do {
-		// Random index in database
-		$index = rand(0, $length);
+		$query = " 
+            SELECT id 
+            FROM images
+        "; 
+         
+        $query_params = array( 
+        ); 
+         
+        try 
+        { 
+            $stmt = $db->prepare($query); 
+            $result = $stmt->execute($query_params); 
+        } 
+        catch(PDOException $ex) 
+        { 
+            $response["success"] = 0;
+			$response["message"] = "Database Error 3";
+            die(json_encode($response).$ex->getMessage());  
+        }
 		
-		$query = "
-			SELECT name, link FROM images WHERE id = $index
-		";
+		$rows = $stmt->fetchAll();
+		$length = count($rows);
+	
+		do {
 		
-		$result = mysql_query($query);
-
-		while($row = mysql_fetch_array($result)) {
-			if(isset($row)) {
-				$output[] = $row;
+			$query = " 
+				SELECT *
+				FROM images 
+				WHERE 
+					id = :id
+			"; 
+			 
+			$query_params = array( 
+				':id' => rand(0, $length)
+			); 
+			 
+			try 
+			{ 
+				$stmt = $db->prepare($query); 
+				$result = $stmt->execute($query_params); 
+			} 
+			catch(PDOException $ex) 
+			{ 
+				$response["success"] = 0;
+				$response["message"] = "Database Error 1";
+				die(json_encode($response).$ex->getMessage());  
 			}
-		}
-	} while(!isset($output));
-	
-	print(json_encode($output));
-	mysql_close();
-
-
-
-
-
-
+			$row = $stmt->fetch();
+		} while(!isset($row));
+		
+        die(json_encode($row));  
 ?>
