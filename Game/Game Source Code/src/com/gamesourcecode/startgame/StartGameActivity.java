@@ -76,9 +76,36 @@ public class StartGameActivity extends Activity implements OnClickListener {
 		// Get all the local game data and start update async task
 
 	}
+	
+	protected void onPause() {
+		super.onPause();
+		Log.i("START GAME", "PAUSED");
+	}
+
+	protected void onResume() {
+		super.onResume();
+
+		Log.i("START GAME", "RESUMED");
+	}
+
+	protected void onStop() {
+		super.onStop();
+		Log.i("START GAME", "STOPPED");
+	}
+
+	protected void onStart() {
+		Log.i("START GAME", "STARTED");
+		super.onStart();
+	}
+	
+	protected void onDestroy() {
+		Log.i("START GAME", "DESTROYED");
+		super.onStart();
+	}
 
 	protected void onRestart() {
 		super.onResume();
+		Log.i("START GAME", "RESTARTED");
 
 		// Just temporary
 		LinearLayout linear = (LinearLayout) findViewById(R.id.linear);
@@ -118,7 +145,7 @@ public class StartGameActivity extends Activity implements OnClickListener {
 
 				json = jsonParser.makeHttpRequest(URL_UPDATE_GAMES, "POST", params);
 
-				Log.i("START GAME UPDATE - attempt", json.toString());
+				//Log.i("START GAME UPDATE - attempt", json.toString());
 
 				success = json.getInt(TAG_SUCCESS);
 
@@ -182,8 +209,9 @@ public class StartGameActivity extends Activity implements OnClickListener {
 						public void onClick(View v) {
 							Intent i = new Intent(StartGameActivity.this, GameOverviewActivity.class);
 							i.putExtra("jsonString", game.toString());
-							Log.i("Should open game overview", game.toString());
+							//Log.i("Should open game overview", game.toString());
 							startActivity(i);
+							finish();
 						}
 					});
 
@@ -194,7 +222,7 @@ public class StartGameActivity extends Activity implements OnClickListener {
 				linear.addView(b);
 			}
 
-			Log.i("START GAME UPDATE", result);
+			//Log.i("START GAME UPDATE", result);
 
 		}
 
@@ -243,18 +271,19 @@ public class StartGameActivity extends Activity implements OnClickListener {
 
 				JSONObject json = jsonParser.makeHttpRequest(URL_CREATE_GAME, "POST", params);
 
-				Log.i("START GAME NEW GAME- attempt", json.toString());
+				//Log.i("START GAME NEW GAME- attempt", json.toString());
 
 				success = json.getInt(TAG_SUCCESS);
 
 				if (success == 1) {
-					Log.i("START GAME", "Game successfully created!" + json.getString(TAG_MESSAGE) + "URL: " + URL_CREATE_GAME);
+					//Log.i("START GAME", "Game successfully created!" + json.getString(TAG_MESSAGE) + "URL: " + URL_CREATE_GAME);
 					new UpdateGames().execute();
 					return json.getString(TAG_MESSAGE);
 				} else {
 					Log.i("START GAME", "Failed to create game!");
 					Intent i = new Intent(StartGameActivity.this, HomeActivity.class);
 					startActivity(i);
+					finish();
 					return json.getString(TAG_MESSAGE);
 				}
 			} catch (JSONException e) {

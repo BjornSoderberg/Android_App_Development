@@ -26,12 +26,13 @@ public class Image {
 		this.game = game;
 
 		width = WIDTH;
-		height = WIDTH * bitmaps[0].getHeight() / bitmaps[0].getWidth();
+		if (bitmaps[0] != null) height = WIDTH * bitmaps[0].getHeight() / bitmaps[0].getWidth();
+		else height = (int)(WIDTH / 1.4);
 
 		try {
 			this.bitmaps = new Bitmap[bitmaps.length];
 			for (int i = 0; i < bitmaps.length; i++) {
-				this.bitmaps[i] = Bitmap.createScaledBitmap(bitmaps[i], width, height, true);
+				if(bitmaps[i] != null) this.bitmaps[i] = Bitmap.createScaledBitmap(bitmaps[i], width, height, true);
 				bitmaps[i] = null;
 			}
 		} catch (OutOfMemoryError e) {
@@ -61,7 +62,7 @@ public class Image {
 		bitmap = getBitmap(index + 1);
 		bitmap2 = getBitmap(index);
 
-		if (index + 2 < bitmaps.length) bitmaps[index + 2].recycle();
+		if (index + 2 < bitmaps.length && bitmaps[index + 2] != null) bitmaps[index + 2].recycle();
 	}
 
 	public void render(Canvas screen) {
@@ -92,11 +93,12 @@ public class Image {
 	public int getHeight() {
 		return height;
 	}
-	
-	public void recycleBitmaps() {
-		for(int i = 0; i < bitmaps.length; i++) {
-			if(!bitmaps[i].isRecycled()) bitmaps[i].recycle();
+
+	public void recycle() {
+		for (int i = 0; i < bitmaps.length; i++) {
+			if(bitmaps[i] != null) if (!bitmaps[i].isRecycled()) bitmaps[i].recycle();
 		}
 		bitmaps = null;
+		game = null;
 	}
 }

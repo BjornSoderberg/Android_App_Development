@@ -47,6 +47,7 @@ public class HomeActivity extends Activity implements OnClickListener {
 		if(v.getId() == R.id.startGame) {
 			Intent intent = new Intent(HomeActivity.this, StartGameActivity.class);
 			startActivity(intent);
+			finish();
 		}
 		if(v.getId() == R.id.logout) {
 			session.logoutUser();
@@ -78,6 +79,11 @@ public class HomeActivity extends Activity implements OnClickListener {
 
 	protected void onStart() {
 		Log.i("HOME", "STARTED");
+		super.onStart();
+	}
+	
+	protected void onDestroy() {
+		Log.i("HOME", "DESTROYED");
 		super.onStart();
 	}
 }

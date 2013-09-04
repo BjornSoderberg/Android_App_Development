@@ -104,7 +104,7 @@ public class Button {
 		this.y = y;
 	}
 
-	public void recycleBitmaps() {
+	public void recycle() {
 		bitmap = null;
 	}
 }

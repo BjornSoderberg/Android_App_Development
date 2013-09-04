@@ -136,6 +136,8 @@ public class Game extends SurfaceView implements Runnable, Callback {
 		running = false;
 		recycle();
 		setOnTouchListener(null);
+		activity = null;
+		holder.removeCallback(this);
 
 		boolean retry = true;
 		while (retry) {
@@ -201,7 +203,8 @@ public class Game extends SurfaceView implements Runnable, Callback {
 		// Ends the game when 45 seconds have passed
 		if(currentTime >= totalTime * 1.5) {
 			render();
-			new GameFinished().execute();
+			score = 0;
+			new GameFinished(activity, score, gameID, mIndex);
 			stop();
 			return;
 		}
@@ -228,7 +231,8 @@ public class Game extends SurfaceView implements Runnable, Callback {
 		// /////// STARTING GAME ACTIVITY WHEN THE WORD IS CORRECT
 		if (guessedRight) {
 			render();
-			new GameFinished().execute();
+			score = 1000 - (int) (1000 / (totalTime * 1.5) * currentTime);
+			new GameFinished(activity, score, gameID, mIndex);
 			stop();
 			return;
 		}
@@ -291,7 +295,7 @@ public class Game extends SurfaceView implements Runnable, Callback {
 		int xOffset = paddingX, yOffset = paddingY;
 
 		// -2 to not make chars for the scramble and clear buttons
-		chars = new char[letterButtonCols * letterButtonRows - 2];
+		chars = new char[letterButtonCols * letterButtonRows /*- 2*/];
 		chars = generateLetterButtonChars(chars);
 		int charIndex = 0;
 
@@ -301,63 +305,62 @@ public class Game extends SurfaceView implements Runnable, Callback {
 				xOffset = x * width + paddingX;
 				// if x is the last button of the col
 				// This makes the scramble and clear buttons
-				if (x == letterButtonCols - 1) {
-					if (y == 0) {
-						Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.scramble);
-						bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
-						miscButtons.add(new GameButton(xOffset, yOffset, width, height, this, bitmap) {
-							// Makes the chars of the letter buttons which
-							// contain a char randomly change
-							// The empty letter buttons will not change
-							public void onClick() {
-								int index = 0;
-								for (LetterButton l : letterButtons) {
-									if (l.containsLetter()) {
-										index++;
-									}
-								}
-								char[] chars = new char[index];
-								index = 0;
-								for (int i = 0; i < letterButtons.size(); i++) {
-									if (letterButtons.get(i).containsLetter()) {
-										chars[index] = letterButtons.get(i).getChar();
-										index++;
-									}
-								}
-								chars = scrambleCharArray(chars);
-								index = 0;
-								for (int i = 0; i < letterButtons.size(); i++) {
-									if (letterButtons.get(i).containsLetter()) {
-										letterButtons.get(i).scramble(chars[index]);
-										index++;
-									}
-								}
-							}
-						});
-					} else if (y == 1) {
-						Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.clear);
-						bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
-						miscButtons.add(new GameButton(xOffset, yOffset, width, height, this, bitmap) {
-							public void onClick() {
-								for (GameButton b : game.getButtons()) {
-									b.reset();
-								}
-							}
-						});
-					} else {
-						Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.empty);
-						miscButtons.add(new GameButton(xOffset, yOffset, width, height, this, bitmap));
-					}
-				} else {
+//				if (x == letterButtonCols - 1) {
+//					if (y == 0) {
+//						Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.scramble);
+//						bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
+//						miscButtons.add(new GameButton(xOffset, yOffset, width, height, this, bitmap) {
+//							// Makes the chars of the letter buttons which
+//							// contain a char randomly change
+//							// The empty letter buttons will not change
+//							public void onClick() {
+//								int index = 0;
+//								for (LetterButton l : letterButtons) {
+//									if (l.containsLetter()) {
+//										index++;
+//									}
+//								}
+//								char[] chars = new char[index];
+//								index = 0;
+//								for (int i = 0; i < letterButtons.size(); i++) {
+//									if (letterButtons.get(i).containsLetter()) {
+//										chars[index] = letterButtons.get(i).getChar();
+//										index++;
+//									}
+//								}
+//								chars = scrambleCharArray(chars);
+//								index = 0;
+//								for (int i = 0; i < letterButtons.size(); i++) {
+//									if (letterButtons.get(i).containsLetter()) {
+//										letterButtons.get(i).scramble(chars[index]);
+//										index++;
+//									}
+//								}
+//							}
+//						});
+//					} else if (y == 1) {
+//						Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.clear);
+//						bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
+//						miscButtons.add(new GameButton(xOffset, yOffset, width, height, this, bitmap) {
+//							public void onClick() {
+//								for (GameButton b : game.getButtons()) {
+//									b.reset();
+//								}
+//							}
+//						});
+//					} else {
+//						Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.empty);
+//						miscButtons.add(new GameButton(xOffset, yOffset, width, height, this, bitmap));
+//					}
+//				} else {
 					// charIndex makes it easier to chose the correct char from
 					// the char array
 					// The scramble and clear buttons make it impossible to use
 					// x + y * letterButtonCols
 					char c = chars[charIndex];
-					Bitmap bitmap = getAlphabetBitmap(c, width, height);
-					letterButtons.add(new LetterButton(xOffset, yOffset, width, height, this, bitmap, c));
+					letterButtons.add(new LetterButton(xOffset, yOffset, width, height, this, getAlphabetBitmap(c, width, height), c));
 					charIndex++;
-				}
+//				}
 			}
 		}
 
@@ -545,88 +548,26 @@ public class Game extends SurfaceView implements Runnable, Callback {
 
 	private void recycle() {
 		if (image != null) {
-			image.recycleBitmaps();
+			image.recycle();
 			image = null;
 		}
 		if (getButtons() != null) {
 			for (Button b : getButtons()) {
-				b.recycleBitmaps();
+				b.recycle();
 				b = null;
 			}
+			letterButtons.clear();
 			letterButtons = null;
+			wordButtons.clear();
 			wordButtons = null;
+			miscButtons.clear();
 			miscButtons = null;
+			buttons.clear();
+			buttons = null;
 		}
 	}
 
 	public Activity getActivity() {
 		return activity;
-	}
-
-	class GameFinished extends AsyncTask<String, String, String> {
-
-		int success;
-		JSONObject json;
-		JSONParser jsonParser = new JSONParser();
-
-		protected void onPreExecute() {
-			super.onPreExecute();
-			
-			
-			score = 1000 - (int) (1000 / (totalTime * 1.5) * currentTime);
-		}
-
-		protected String doInBackground(String... string) {
-			try {				
-				List<NameValuePair> params = new ArrayList<NameValuePair>();
-				params.add(new BasicNameValuePair("id", Integer.toString(gameID)));
-				params.add(new BasicNameValuePair("index", Integer.toString(mIndex)));
-				params.add(new BasicNameValuePair("score", Integer.toString((int) score)));
-
-				Log.i("GAME - Params ", params.toString());
-
-				json = jsonParser.makeHttpRequest(URL_GAME_FINISHED, "POST", params);
-
-				Log.i("GAME - attempt", json.toString());
-
-				success = json.getInt(TAG_SUCCESS);
-
-				if (success == 1) {
-					Log.i("GAME", "Games updated!");
-
-					return json.toString();
-				} else {
-					Log.i("GAME", "Failed to submit score!");
-				}
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-
-			return null;
-		}
-
-		protected void onPostExecute(String result) {
-			super.onPostExecute(result);
-
-			Log.i("GAME - UPDATED FINISHED GAME", result + "");
-
-			if (result != null) {
-				try {
-					JSONObject game = json.getJSONObject("game");
-
-					Intent i = new Intent(activity, GameOverviewActivity.class);
-					i.putExtra("jsonString", game.toString());
-					Log.i("Game activity", "starting game overview");
-					
-					activity.startActivity(i);
-					activity.finish();
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-			} else {
-				Intent i = new Intent(activity.getBaseContext(), HomeActivity.class);
-				activity.startActivity(i);
-			}
-		}
 	}
 }

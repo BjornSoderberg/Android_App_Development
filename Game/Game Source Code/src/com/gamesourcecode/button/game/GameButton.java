@@ -72,4 +72,9 @@ public class GameButton extends Button {
 	public char getChar() {
 		return c;
 	}
+	
+	public void recycle() {
+		super.recycle();
+		game = null;
+	}
 }
