@@ -19,7 +19,7 @@ import com.gamesourcecode.misc.JSONParser;
 public class GameFinished extends AsyncTask<Integer, String, String> {
 
 	private int success, score, gameID, mIndex;
-	private boolean redirect = false;
+	private boolean redirect = true;
 
 	private JSONObject json;
 	private JSONParser jsonParser = new JSONParser();
@@ -31,11 +31,11 @@ public class GameFinished extends AsyncTask<Integer, String, String> {
 		execute(score, gameID, mIndex);
 	}
 
-//	public GameFinished(GameActivity activity, int score, int gameID, int mIndex, boolean redirect) {
-//		this.activity = activity;
-//		this.redirect = redirect;
-//		execute(score, gameID, mIndex);
-//	}
+	public GameFinished(GameActivity activity, int score, int gameID, int mIndex, boolean redirect) {
+		this.activity = activity;
+		this.redirect = redirect;
+		execute(score, gameID, mIndex);
+	}
 
 	public static final String URL_GAME_FINISHED = "http://192.168.60.49/android/database/gamefinished.php";
 	public static final String TAG_SUCCESS = "success";

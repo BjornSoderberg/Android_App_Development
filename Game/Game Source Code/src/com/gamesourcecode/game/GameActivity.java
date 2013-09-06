@@ -68,7 +68,8 @@ public class GameActivity extends Activity {
 
 		if (game != null) if (game.isRunning()) {
 
-			new GameFinished(this, score, getIntent().getExtras().getInt("id"), getIntent().getExtras().getInt("mIndex"));
+			// the last parameter prevents being redirected to another activity
+			new GameFinished(this, score, getIntent().getExtras().getInt("id"), getIntent().getExtras().getInt("mIndex"), false);
 
 			game.recycle();
 
