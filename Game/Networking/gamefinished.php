@@ -3,9 +3,10 @@
 	
 	if(!empty($_POST)) {
 	
-	$score = 'score'.$_POST['index'].'_';
-	$round = -1;
-	
+		$mIndex = $_POST['index'];
+		if($mIndex == 1) $oIndex = 2;
+		else $oIndex = 1;
+		
 		$query = "
 			SELECT *
 			FROM games
@@ -27,48 +28,58 @@
 		
 		$row = $stmt->fetch();
 		
-		// 5 is the number of games in a match
-		for($i = 0; $i < 5; $i++) {
-		// score is declared at the top. It is score1_ or score 2_
-			if($row[$score.$i] == -1) {
-				$round = $i;
-				break;
-			}
-		}
 		
-		// Checks if the round is available (by comparing to what rounds the opponent has played)
-		if($_POST['index'] == 1) $index = 2;
-		else $index = 1;
+		// Update
+		$game_state = $row['game_state'];
 		
-		$score2 = "score".$index."_";
-		$round2 = -1;
-		
-		for($i = 0; $i < 5; $i++) {
-		// score is declared at the top. It is score1_ or score 2_
-			if($row[$score2.$i] == -1) {
-				$round2 = $i;
-				break;
-			}
-		}
-		
-		if($round2 + 1 < $round) {
+		if($game_state != $mIndex) {
 			$response["success"] = 0;
-			$response["message"] = "This round is currently unavailable!";
-            die(json_encode($response)); 
+			$response["message"] = "There was an error when submitting the score!";
+			die(json_encode($response));
 		}
 		
-	
-		// Should also check if the previous score is not zero
-		$query = "
-			UPDATE games
-			SET " . $score . $round . " = :score, last_play_time = CURRENT_TIMESTAMP
-			WHERE id = :id
-		";
+		if($row['game_score'.$oIndex] == -1) {
+			$game_state = $oIndex;
+			$query = "
+				UPDATE games
+				SET game_score" . $mIndex . " = :game_score".$mIndex.",
+					game_state = :game_state,
+					last_play_time = CURRENT_TIMESTAMP
+				WHERE id = :id
+			";
 		
-		$query_params = array(
-			':score' => $_POST['score'],
+			$query_params = array(
+				':game_score'.$mIndex => $_POST['score'],
+				':game_state' => $game_state,
+				':id' => $_POST['id']
+			);
+		}
+		else {
+			$game_state = $mIndex;
+			
+			if($_POST['score'] > $row['game_score'.$oIndex]) $s = "score".$mIndex." = score".$mIndex." + 1";
+			if($_POST['score'] == $row['game_score'.$oIndex]) $s = "";
+			if($_POST['score'] < $row['game_score'.$oIndex]) $s = "score".$oIndex." = score".$oIndex." + 1";
+			
+			$query = "
+			UPDATE games
+			SET game_score1 = -1,
+				game_score2 = -1,
+				game_state = :game_state,
+				last_play_time = CURRENT_TIMESTAMP,
+				".$s."
+			WHERE id = :id
+			";
+			
+			$query_params = array(
+			':game_state' => $game_state,
 			':id' => $_POST['id']
 		);
+		}
+		
+		
+		
+		
 		
 		try {
 			$stmt = $db->prepare($query);
@@ -81,6 +92,8 @@
 		
 		
 		
+		
+		// Get new information
 		$query = "
 			SELECT *
 			FROM games

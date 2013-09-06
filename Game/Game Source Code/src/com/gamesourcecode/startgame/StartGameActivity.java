@@ -21,7 +21,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.Toast;
 
 import com.gamesourcecode.R;
@@ -40,7 +39,6 @@ public class StartGameActivity extends Activity implements OnClickListener {
 	private int numberOfGames = 0;
 
 	private Button startRandomGame, back;
-	private ScrollView scrollView;
 
 	private JSONParser jsonParser = new JSONParser();
 
@@ -69,8 +67,6 @@ public class StartGameActivity extends Activity implements OnClickListener {
 
 		back = (Button) findViewById(R.id.back);
 		back.setOnClickListener(this);
-
-		scrollView = (ScrollView) findViewById(R.id.scrollView);
 
 		new UpdateGames().execute();
 		// Get all the local game data and start update async task
@@ -173,12 +169,13 @@ public class StartGameActivity extends Activity implements OnClickListener {
 			LinearLayout linear = (LinearLayout) findViewById(R.id.linear);
 			// Removes everything that is inside the layout so that no
 			// duplicates can be shown
-			linear.removeAllViews();
+			linear.removeAllViews();	
+
+			SessionManager session = new SessionManager(getApplicationContext());
+
+			String username = session.getUserDetails().get(SessionManager.KEY_USERNAME);
 
 			for (int i = 0; i < numberOfGames; i++) {
-				SessionManager session = new SessionManager(getApplicationContext());
-
-				String username = session.getUserDetails().get(SessionManager.KEY_USERNAME);
 
 				Button b = new Button(StartGameActivity.this);
 
@@ -190,6 +187,7 @@ public class StartGameActivity extends Activity implements OnClickListener {
 
 					int me = -1;
 					int opponent = -1;
+					
 					if (game.getString("username1").equalsIgnoreCase(username)) {
 						opponent = 2;
 						me = 1;
@@ -201,7 +199,8 @@ public class StartGameActivity extends Activity implements OnClickListener {
 
 					text = "Game with " + game.getString("username" + opponent);
 
-					text += "\nYou : " + getGameScore(me, game) + " - " + getGameScore(opponent, game) + " : " + game.getString("username" + opponent);
+					//text += "\nYou : " + getGameScore(me, game) + " - " + getGameScore(opponent, game) + " : " + game.getString("username" + opponent);
+					text += "\nYou : " + game.getString("score" + me) + " - " + game.getString("score" + opponent) + " : " + game.getString("username" + opponent);
 
 					b.setText(text);
 
@@ -227,7 +226,6 @@ public class StartGameActivity extends Activity implements OnClickListener {
 		}
 
 		private int getGameScore(int p, JSONObject game) {
-			// game.getString("score" + i + "_1")
 			int numGames = 5;
 			int score = 0;
 			int s = 0;

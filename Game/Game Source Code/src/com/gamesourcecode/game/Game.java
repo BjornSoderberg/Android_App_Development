@@ -71,7 +71,7 @@ public class Game extends SurfaceView implements Runnable, Callback {
 
 	Object pauseLock = new Object();
 
-	private int gameID, mIndex;
+	private int gameID, mIndex, round;
 	public static final String URL_GAME_FINISHED = "http://192.168.60.49/android/database/gamefinished.php";
 	public static final String TAG_SUCCESS = "success";
 	public static final String TAG_MESSAGE = "message";
@@ -81,10 +81,11 @@ public class Game extends SurfaceView implements Runnable, Callback {
 	// Just for testing
 	int color = 0x44;
 
-	public Game(Context context, GameActivity activity, Bitmap[] bitmaps, String word) {
+	public Game(Context context, GameActivity activity, Bitmap[] bitmaps, String word, int round) {
 		super(context);
 		this.activity = activity;
 		this.word = word;
+		this.round = round;
 
 		holder = getHolder();
 		holder.addCallback(this);
@@ -133,11 +134,7 @@ public class Game extends SurfaceView implements Runnable, Callback {
 	}
 
 	public synchronized void stop() {
-		running = false;
 		recycle();
-		setOnTouchListener(null);
-		activity = null;
-		holder.removeCallback(this);
 
 		boolean retry = true;
 		while (retry) {
@@ -204,7 +201,10 @@ public class Game extends SurfaceView implements Runnable, Callback {
 		if(currentTime >= totalTime * 1.5) {
 			render();
 			score = 0;
-			new GameFinished(activity, score, gameID, mIndex);
+			
+			if(round == 4) new GameFinished(activity, activity.getScore() + score, gameID, mIndex);
+			else activity.nextRound(score);
+			
 			stop();
 			return;
 		}
@@ -232,7 +232,8 @@ public class Game extends SurfaceView implements Runnable, Callback {
 		if (guessedRight) {
 			render();
 			score = 1000 - (int) (1000 / (totalTime * 1.5) * currentTime);
-			new GameFinished(activity, score, gameID, mIndex);
+			if(round == 4) new GameFinished(activity, activity.getScore() + score, gameID, mIndex);
+			else activity.nextRound(score);
 			stop();
 			return;
 		}
@@ -526,8 +527,6 @@ public class Game extends SurfaceView implements Runnable, Callback {
 
 	public synchronized void setRunning(boolean bool) {
 		running = bool;
-		image = null;
-		screen = null;
 	}
 
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
@@ -546,7 +545,7 @@ public class Game extends SurfaceView implements Runnable, Callback {
 		surfaceDestroyed = true;
 	}
 
-	private void recycle() {
+	public void recycle() {
 		if (image != null) {
 			image.recycle();
 			image = null;
@@ -567,6 +566,11 @@ public class Game extends SurfaceView implements Runnable, Callback {
 		}
 		
 		touch.recycle();
+
+		running = false;
+		setOnTouchListener(null);
+		activity = null;
+		holder.removeCallback(this);
 	}
 
 	public Activity getActivity() {

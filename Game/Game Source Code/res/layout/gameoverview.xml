@@ -33,48 +33,18 @@
                 android:textAppearance="?android:attr/textAppearanceMedium" />
 
             <TextView
-                android:id="@+id/scoreM_0"
+                android:id="@+id/mGameScore"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:background="#aaaaaa"
-                android:text="" />
-
-            <TextView
-                android:id="@+id/scoreM_1"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="" />
-
-            <TextView
-                android:id="@+id/scoreM_2"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:background="#aaaaaa"
-                android:text="" />
-
-            <TextView
-                android:id="@+id/scoreM_3"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="" />
-
-            <TextView
-                android:id="@+id/scoreM_4"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:background="#aaaaaa"
-                android:text="" />
+                android:text="Score:" />
 
             <Button
                 android:id="@+id/back"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:text="Back" />
+
         </LinearLayout>
 
         <LinearLayout
@@ -93,42 +63,11 @@
                 android:textAppearance="?android:attr/textAppearanceMedium" />
 
             <TextView
-                android:id="@+id/scoreO_0"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:background="#aaaaaa"
-                android:gravity="center"
-                android:text="" />
-
-            <TextView
-                android:id="@+id/scoreO_1"
+                android:id="@+id/oGameScore"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="" />
-
-            <TextView
-                android:id="@+id/scoreO_2"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:background="#aaaaaa"
-                android:text="" />
-
-            <TextView
-                android:id="@+id/scoreO_3"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="" />
-
-            <TextView
-                android:id="@+id/scoreO_4"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:background="#aaaaaa"
-                android:text="" />
+                android:text="Opponent's score" />
 
             <Button
                 android:id="@+id/play"

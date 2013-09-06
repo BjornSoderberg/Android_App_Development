@@ -19,15 +19,23 @@ import com.gamesourcecode.misc.JSONParser;
 public class GameFinished extends AsyncTask<Integer, String, String> {
 
 	private int success, score, gameID, mIndex;
+	private boolean redirect = false;
+
 	private JSONObject json;
 	private JSONParser jsonParser = new JSONParser();
-	
+
 	private GameActivity activity;
-	
+
 	public GameFinished(GameActivity activity, int score, int gameID, int mIndex) {
 		this.activity = activity;
 		execute(score, gameID, mIndex);
 	}
+
+//	public GameFinished(GameActivity activity, int score, int gameID, int mIndex, boolean redirect) {
+//		this.activity = activity;
+//		this.redirect = redirect;
+//		execute(score, gameID, mIndex);
+//	}
 
 	public static final String URL_GAME_FINISHED = "http://192.168.60.49/android/database/gamefinished.php";
 	public static final String TAG_SUCCESS = "success";
@@ -40,8 +48,8 @@ public class GameFinished extends AsyncTask<Integer, String, String> {
 		score = ints[0];
 		gameID = ints[1];
 		mIndex = ints[2];
-		
-		try {				
+
+		try {
 			List<NameValuePair> params = new ArrayList<NameValuePair>();
 			params.add(new BasicNameValuePair("id", Integer.toString(gameID)));
 			params.add(new BasicNameValuePair("index", Integer.toString(mIndex)));
@@ -73,6 +81,11 @@ public class GameFinished extends AsyncTask<Integer, String, String> {
 		super.onPostExecute(result);
 
 		Log.i("GAME - UPDATED FINISHED GAME", result + "");
+		
+		if (!redirect) {
+			activity = null;
+			return;
+		}
 
 		if (result != null) {
 			try {
@@ -81,7 +94,7 @@ public class GameFinished extends AsyncTask<Integer, String, String> {
 				Intent i = new Intent(activity, GameOverviewActivity.class);
 				i.putExtra("jsonString", game.toString());
 				Log.i("Game activity", "starting game overview");
-				
+
 				activity.startActivity(i);
 				activity.finish();
 			} catch (JSONException e) {
@@ -91,7 +104,8 @@ public class GameFinished extends AsyncTask<Integer, String, String> {
 			Intent i = new Intent(activity, HomeActivity.class);
 			activity.startActivity(i);
 			activity.finish();
-			activity = null;
 		}
+
+		activity = null;
 	}
 }

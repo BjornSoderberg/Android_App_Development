@@ -24,12 +24,7 @@ public class GameOverviewActivity extends Activity implements OnClickListener {
 	private JSONObject json;
 	private SessionManager session;
 
-	TextView title, mScoreTV, oScoreTV;
-
-	// text views for displaying the scores for the different rounds
-	// M stands for "me" (to the left) and O stands for "opponent" (to the
-	// right)
-	TextView[] tvScoreM, tvScoreO;
+	TextView title, mScoreTV, oScoreTV, mGameScoreTV, oGameScoreTV;
 	Button back, play;
 
 	// oIndex - opponent index, mIndex - me index
@@ -38,9 +33,8 @@ public class GameOverviewActivity extends Activity implements OnClickListener {
 	private String oName, mName;
 	private String imageData = "";
 
-	private int mScore, oScore, ID;
-	private int numGames = 5;
-	private int[] scoreM, scoreO;
+	private int mScore, oScore, mGameScore, oGameScore, ID;
+	private int gameState = 0;
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -63,27 +57,24 @@ public class GameOverviewActivity extends Activity implements OnClickListener {
 				oIndex = 1;
 				mIndex = 2;
 			}
+			
 
 			mName = json.getString("username" + mIndex);
 			oName = json.getString("username" + oIndex);
-			
+
+			mScore = Integer.parseInt(json.getString("score" + mIndex));
+			oScore = Integer.parseInt(json.getString("score" + oIndex));
+
+			mGameScore = Integer.parseInt(json.getString("game_score" + mIndex));
+			oGameScore = Integer.parseInt(json.getString("game_score" + oIndex));
+
+			// determines whether username1 or username2 should play
+			gameState = Integer.parseInt(json.getString("game_state"));
+
 			String s = json.getString("images");
-			for(int i = 0; i < s.length(); i++) {
-				if(!s.substring(i , i + 1).equals("\\") && !(s.substring(i, i + 1) == null)) imageData += s.substring(i, i+1);
+			for (int i = 0; i < s.length(); i++) {
+				if (!s.substring(i, i + 1).equals("\\") && !(s.substring(i, i + 1) == null)) imageData += s.substring(i, i + 1);
 			}
-
-			initScores(json);
-
-			int tot = 0;
-			for (int i = 0; i < numGames; i++) {
-				if (scoreM[i] != -1) tot += scoreM[i];
-			}
-			mScore = tot;
-			tot = 0;
-			for (int i = 0; i < numGames; i++) {
-				if (scoreO[i] != -1) tot += scoreO[i];
-			}
-			oScore = tot;
 
 			ID = json.getInt("id");
 
@@ -103,89 +94,36 @@ public class GameOverviewActivity extends Activity implements OnClickListener {
 		play.setEnabled(playButtonEnabled());
 
 		title.setText(mName + " vs. " + oName);
-
-		setTVText();
 	}
 
 	private boolean playButtonEnabled() {
-		for (int i = numGames - 1; i >= 0; i--) {
-			if (scoreO[i] != -1) {
-				if (i - 1 >= 0) if (scoreM[i - 1] == -1) return true;
-				if (scoreM[i] == 0) return true;
-				if (i + 1 < scoreM.length) if (scoreM[i + 1] == -1) return true;
-			}
-			if (i == 0) {
-				if (scoreM[i] == -1) return true;
-			}
-			if(i == numGames) {
-				// If the fifth round's score is set, the button should not be clickable
-				if(scoreM[i] != -1) return false;
-			}
-		}
-
-		return false;
-	}
-	
-	private int getRound() {
-		for (int i = 0; i < numGames; i++) {
-			if(scoreM[i] == -1) return i;
-		}
-		return -1;
-	}
-
-	private void initScores(JSONObject game) {
-		scoreM = new int[numGames];
-		scoreO = new int[numGames];
-
-		try {
-
-			for (int i = 0; i < numGames; i++) {
-				scoreM[i] = Integer.parseInt(game.getString("score" + mIndex + "_" + i));
-				scoreO[i] = Integer.parseInt(game.getString("score" + oIndex + "_" + i));
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		if(gameState == mIndex) return true;
+		else return false;
 	}
 
 	private void initScoreTVs() {
+		// inits top text views with larger text
 		mScoreTV = (TextView) findViewById(id.mScore);
+		mScoreTV.setText(mScore + " wins");
+
 		oScoreTV = (TextView) findViewById(id.oScore);
+		oScoreTV.setText(oScore + " wins");
 
-		mScoreTV.setText(mScore + " points");
-		oScoreTV.setText(oScore + " points");
-
-		tvScoreM = new TextView[numGames];
-		tvScoreO = new TextView[numGames];
-
-		tvScoreM[0] = (TextView) findViewById(id.scoreM_0);
-		tvScoreM[1] = (TextView) findViewById(id.scoreM_1);
-		tvScoreM[2] = (TextView) findViewById(id.scoreM_2);
-		tvScoreM[3] = (TextView) findViewById(id.scoreM_3);
-		tvScoreM[4] = (TextView) findViewById(id.scoreM_4);
-
-		tvScoreO[0] = (TextView) findViewById(id.scoreO_0);
-		tvScoreO[1] = (TextView) findViewById(id.scoreO_1);
-		tvScoreO[2] = (TextView) findViewById(id.scoreO_2);
-		tvScoreO[3] = (TextView) findViewById(id.scoreO_3);
-		tvScoreO[4] = (TextView) findViewById(id.scoreO_4);
-
-		for (int i = 0; i < tvScoreM.length; i++) {
-			tvScoreM[i].setOnClickListener(this);
-			tvScoreO[i].setOnClickListener(this);
+		// inits "score / waiting..." text views
+		mGameScoreTV = (TextView) findViewById(id.mGameScore);
+		oGameScoreTV = (TextView) findViewById(id.oGameScore);
+		
+		if (gameState == mIndex) {
+			mGameScoreTV.setText("It is your turn!");
+			oGameScoreTV.setText("Your opponents score is secret until you play!");
+		} else {
+			if(mGameScore != -1) mGameScoreTV.setText(mGameScore + "");
+			else mGameScoreTV.setText("Not able to play yet!");
+			oGameScoreTV.setText("Waiting...");
 		}
+
 	}
 
-	private void setTVText() {
-		for (int i = 0; i < tvScoreM.length; i++) {
-			if (scoreM[i] != -1) tvScoreM[i].setText(scoreM[i] + "");
-			else tvScoreM[i].setText("Not played yet!");
-
-			if (scoreO[i] != -1) tvScoreO[i].setText(scoreO[i] + "");
-			else tvScoreO[i].setText("Not played yet!");
-		}
-	}
-	
 	public void onBackPressed() {
 		Intent i = new Intent(GameOverviewActivity.this, StartGameActivity.class);
 		startActivity(i);
@@ -203,19 +141,17 @@ public class GameOverviewActivity extends Activity implements OnClickListener {
 		if (v.getId() == R.id.play) {
 			try {
 				Intent i = new Intent(GameOverviewActivity.this, GameActivity.class);
-				
+
 				Log.i("GAME OVERVIEW", "Starting Game Activity");
-				
+
 				Log.i("GAME OVERVIEW - image data", imageData);
-				
-				JSONObject json = new JSONObject(imageData);
-				JSONObject o = json.getJSONObject("round" + getRound());
-				
-				i.putExtra("word", o.getString("name"));
-				i.putExtra("link", o.getString("link"));
+
+				i.putExtra("imageData", imageData);
+				// 0 because it's the first game
+				i.putExtra("round", 0);
 				i.putExtra("id", ID);
 				i.putExtra("mIndex", mIndex);
-				
+
 				startActivity(i);
 				finish();
 			} catch (Exception e) {
@@ -224,27 +160,27 @@ public class GameOverviewActivity extends Activity implements OnClickListener {
 		}
 
 	}
-	
+
 	protected void onStart() {
 		super.onStart();
 		Log.i("GAME OVERVIEW", "STARTED");
 	}
-	
+
 	protected void onRestart() {
 		super.onRestart();
 		Log.i("GAME OVERVIEW", "RESTARTED");
 	}
-	
+
 	protected void onResume() {
 		super.onResume();
 		Log.i("GAME OVERVIEW", "RESUMED");
 	}
-	
+
 	protected void onDestroy() {
 		super.onDestroy();
 		Log.i("GAME OVERVIEW", "DESTROYED");
 	}
-	
+
 	protected void onStop() {
 		super.onStop();
 		Log.i("GAME OVERVIEW", "STOPPED");
