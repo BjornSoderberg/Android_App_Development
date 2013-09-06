@@ -565,6 +565,8 @@ public class Game extends SurfaceView implements Runnable, Callback {
 			buttons.clear();
 			buttons = null;
 		}
+		
+		touch.recycle();
 	}
 
 	public Activity getActivity() {

@@ -16,6 +16,10 @@ public class OnTouchHandler implements OnTouchListener {
 	public OnTouchHandler(Game game) {
 		this.game = game;
 	}
+	
+	public void recycle() {
+		game = null;
+	}
 
 	public boolean onTouch(View v, MotionEvent e) {
 		

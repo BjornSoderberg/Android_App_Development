@@ -46,13 +46,6 @@ public class GameActivity extends Activity {
 
 	}
 
-	public void startGameOverview(String name, String data) {
-		Intent i = new Intent(this, GameOverviewActivity.class);
-		i.putExtra("jsonString", data);
-		Log.i("Game activity", "starting game overview");
-		startActivity(i);
-	}
-
 	protected void onResume() {
 		super.onResume();
 		if (game != null) game.resume();
@@ -78,10 +71,6 @@ public class GameActivity extends Activity {
 		
 		new GameFinished().execute();
 		
-//		if (game != null) {
-//			if (game.isRunning()) game.stop();
-//			game = null;
-//		}
 		game.setRunning(false);
 
 	}
@@ -230,8 +219,12 @@ public class GameActivity extends Activity {
 			if (result != null) {
 				try {
 					JSONObject game = json.getJSONObject("game");
-
-					startGameOverview("jsonString", game.toString());
+					
+					Intent i = new Intent(GameActivity.this, GameOverviewActivity.class);
+					i.putExtra("jsonString", game.toString());
+					Log.i("Game activity", "starting game overview");
+					startActivity(i);
+					finish();
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}

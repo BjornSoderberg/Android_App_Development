@@ -114,8 +114,10 @@ public class RegisterActivity extends Activity implements OnClickListener {
 
 			return null;
 		}
-
-		protected void onPostExcecute(String toastMessage) {
+		
+		@Override
+		protected void onPostExecute(String toastMessage) {
+			super.onPostExecute(toastMessage);
 			pDialog.dismiss();
 			InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 			mgr.hideSoftInputFromWindow(user.getWindowToken(), 0);

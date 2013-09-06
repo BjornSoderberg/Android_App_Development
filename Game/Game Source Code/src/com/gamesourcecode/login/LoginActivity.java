@@ -74,6 +74,7 @@ public class LoginActivity extends Activity implements OnClickListener {
 			Intent i = new Intent(this, RegisterActivity.class);
 			finish();
 			startActivity(i);
+			finish();
 			break;
 		default:
 			break;
