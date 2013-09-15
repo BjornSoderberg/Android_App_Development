@@ -109,10 +109,9 @@ public class RegisterActivity extends Activity implements OnClickListener {
 				}
 
 			} catch (JSONException e) {
-				e.printStackTrace();
 			}
 
-			return null;
+			return "Oops! Something went wrong!";
 		}
 		
 		@Override

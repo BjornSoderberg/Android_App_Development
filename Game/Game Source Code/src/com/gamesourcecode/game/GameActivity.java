@@ -18,7 +18,9 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
+import com.gamesourcecode.gameoverview.GameOverviewActivity;
 import com.gamesourcecode.home.HomeActivity;
 import com.gamesourcecode.startgame.StartGameActivity;
 
@@ -46,8 +48,7 @@ public class GameActivity extends Activity {
 		}
 		if (round != 0) score = getIntent().getExtras().getInt("score");
 
-		LoadBitmaps loader = new LoadBitmaps();
-		loader.execute();
+		new LoadBitmaps().execute();
 
 	}
 
@@ -66,6 +67,10 @@ public class GameActivity extends Activity {
 		super.onStop();
 		Log.i("GAME", "STOPPED");
 
+		finishGame();
+	}
+
+	private void finishGame() {
 		if (game != null) if (game.isRunning()) {
 
 			// the last parameter prevents being redirected to another activity
@@ -79,6 +84,11 @@ public class GameActivity extends Activity {
 	protected void onRestart() {
 		super.onRestart();
 		Log.i("GAME", "RESTARTED");
+
+		startStartGameActivity();
+	}
+
+	private void startStartGameActivity() {
 
 		Intent i = new Intent(this, StartGameActivity.class);
 		startActivity(i);
@@ -174,19 +184,34 @@ public class GameActivity extends Activity {
 		private Bitmap getBitmap(int i) {
 			String url = "http://192.168.60.49/android/images/" + link + i + ".jpg";
 
-			try {
-				InputStream in = new java.net.URL(url).openStream();
-				Bitmap bitmap = BitmapFactory.decodeStream(in);
-				in.close();
-				return bitmap;
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (OutOfMemoryError e) {
-				e.printStackTrace();
-				for (int j = 0; j < 10; j++) {
-					Log.i("GAME ACTIVITY", "OUT OF MEMORY!!!");
+			boolean retry = true;
+			int count = 0;
+
+			while (retry) {
+				try {
+					retry = false;
+					count++;
+
+					InputStream in = new java.net.URL(url).openStream();
+					Bitmap bitmap = BitmapFactory.decodeStream(in);
+					in.close();
+					return bitmap;
+				} catch (MalformedURLException e) {
+					retry = true;
+				} catch (IOException e) {
+					retry = true;
+				} catch (OutOfMemoryError e) {
+					retry = true;
+					Toast.makeText(GameActivity.this, "Oops! You ran out of memory!", Toast.LENGTH_LONG).show();
+					count = 101;
+				}
+
+				if (count > 100) {
+					Toast.makeText(GameActivity.this, "There was an error loading the images!", Toast.LENGTH_LONG).show();
+					finishGame();
+					startStartGameActivity();
+					
+					break;
 				}
 			}
 
@@ -194,7 +219,6 @@ public class GameActivity extends Activity {
 		}
 
 		private void initWordAndLink() {
-
 			try {
 				Intent i = getIntent();
 				String imageData = i.getStringExtra("imageData");
@@ -206,83 +230,10 @@ public class GameActivity extends Activity {
 				link = o.getString("link");
 
 			} catch (JSONException e) {
-				e.printStackTrace();
+				Toast.makeText(GameActivity.this, "There was an error loading the data!", Toast.LENGTH_LONG).show();
+				startStartGameActivity();
 			}
 
 		}
 	}
-
-	// class GameFinished extends AsyncTask<String, String, String> {
-	//
-	// int success;
-	// JSONObject json;
-	// JSONParser jsonParser = new JSONParser();
-	//
-	// protected void onPreExecute() {
-	// super.onPreExecute();
-	// }
-	//
-	// protected String doInBackground(String... string) {
-	// try {
-	//
-	// List<NameValuePair> params = new ArrayList<NameValuePair>();
-	// params.add(new BasicNameValuePair("id",
-	// getIntent().getExtras().getInt("id") + ""));
-	// params.add(new BasicNameValuePair("index",
-	// getIntent().getExtras().getInt("mIndex") + ""));
-	// params.add(new BasicNameValuePair("score", Integer.toString(0)));
-	//
-	// Log.i("GAME ACTIVITY - Params ", params.toString());
-	//
-	// json = jsonParser.makeHttpRequest(Game.URL_GAME_FINISHED, "POST",
-	// params);
-	//
-	// Log.i("GAME  ACTIVITY- attempt", json.toString());
-	//
-	// success = json.getInt(Game.TAG_SUCCESS);
-	//
-	// if (success == 1) {
-	// Log.i("GAME ACTIVITY", "Games updated!");
-	//
-	// return json.toString();
-	// } else {
-	// Log.i("GAME ACTIVITY", "Failed to submit score!");
-	// }
-	// } catch (JSONException e) {
-	// e.printStackTrace();
-	// }
-	//
-	// return null;
-	// }
-	//
-	// protected void onPostExecute(String result) {
-	// super.onPostExecute(result);
-	//
-	// Log.i("GAME ACTIVITY - UPDATED FINISHED GAME", result + "");
-	//
-	// if (result != null) {
-	// try {
-	// JSONObject game = json.getJSONObject("game");
-	//
-	// Intent i = new Intent(GameActivity.this, GameOverviewActivity.class);
-	// i.putExtra("jsonString", game.toString());
-	// Log.i("Game activity", "starting game overview");
-	// startActivity(i);
-	// finish();
-	// } catch (JSONException e) {
-	// e.printStackTrace();
-	// }
-	// } else {
-	// Intent i = new Intent(GameActivity.this, HomeActivity.class);
-	// startActivity(i);
-	// }
-	//
-	//
-	// if (game != null) {
-	// if (game.isRunning()) game.stop();
-	// game = null;
-	// }
-	// }
-	// }
-
 }

@@ -1,7 +1,6 @@
 <?php
-	require("config.inc.php");
-	
-	
+	// Function copy and pasted from getimage.php
+	function get_image_word_and_link($db, $images) {
 		$query = " 
             SELECT id 
             FROM images
@@ -26,7 +25,6 @@
 		$length = count($rows);
 	
 		do {
-		
 			$query = " 
 				SELECT *
 				FROM images 
@@ -50,7 +48,18 @@
 				die(json_encode($response).$ex->getMessage());  
 			}
 			$row = $stmt->fetch();
-		} while(!isset($row));
+		} while($row == false && !same_words($row, $images));
 		
-        die(json_encode($row));  
+		return $row;
+	}
+	
+	// Should make it impossible for the same word to be used twice in the same game
+	function same_words($row, $images) {
+		if(sizeof($images) == 0) return false;
+		for($i = 0; $i < sizeof($images); $i++) {
+			if($row['name'] == $images[$i]['name']) return true;
+		}
+		
+		return false;
+	}
 ?>

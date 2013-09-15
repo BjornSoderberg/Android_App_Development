@@ -19,7 +19,7 @@
 			$result = $stmt->execute($query_params);
 		} catch (PDOException $ex) {
 			$response["success"] = 0;
-			$response["message"] = "Database Error 1. Please Try Again!";
+			$response["message"] = "Database Error 1. Please Try Again!".$ex.getMessage();
             die(json_encode($response).$ex->getMessage()); 
 		}
 		

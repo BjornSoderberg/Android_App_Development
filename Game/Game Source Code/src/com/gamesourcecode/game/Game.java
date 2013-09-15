@@ -170,7 +170,6 @@ public class Game extends SurfaceView implements Runnable, Callback {
 			try {
 				Thread.sleep(2);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
 			}
 
 			delta += (SystemClock.uptimeMillis() - lastTime) / millisPerTick;

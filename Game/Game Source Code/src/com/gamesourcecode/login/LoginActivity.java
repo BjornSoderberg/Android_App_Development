@@ -124,7 +124,6 @@ public class LoginActivity extends Activity implements OnClickListener {
 					return json.getString(TAG_MESSAGE);
 				}
 			} catch (JSONException e) {
-				e.printStackTrace();
 			}
 
 			return "Oop! Something went wrong!";

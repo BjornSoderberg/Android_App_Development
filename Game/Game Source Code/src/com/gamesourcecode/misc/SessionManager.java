@@ -18,7 +18,7 @@ public class SessionManager {
 	
 	int PRIVATE_MODE = 0;
 	
-	private static final String PREFERENCES_NAME = "Game Source Code";
+	public static final String PREFERENCES_NAME = "Game Source Code";
 	
 	// Keys for setting and getting preferences
 	public static final String KEY_USERNAME = "username";

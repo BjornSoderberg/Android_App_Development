@@ -11,7 +11,10 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -43,11 +46,11 @@ public class StartGameActivity extends Activity implements OnClickListener {
 	private JSONParser jsonParser = new JSONParser();
 
 	private static final String URL_CREATE_GAME = "http://192.168.60.49/android/database/startgame.php";
-	private static final String URL_UPDATE_GAMES = "http://192.168.60.49/android/database/getgames.php";
 	private static final String TAG_SUCCESS = "success";
 	private static final String TAG_MESSAGE = "message";
 	private static final String TAG_GAME = "game";
 	private static final String TAG_NUMBER_OF_GAMES = "number_of_games";
+	private static final String TAG_GAME_DATA = "gameData";
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -67,12 +70,8 @@ public class StartGameActivity extends Activity implements OnClickListener {
 
 		back = (Button) findViewById(R.id.back);
 		back.setOnClickListener(this);
-
-		new UpdateGames().execute();
-		// Get all the local game data and start update async task
-
 	}
-	
+
 	protected void onPause() {
 		super.onPause();
 		Log.i("START GAME", "PAUSED");
@@ -92,8 +91,17 @@ public class StartGameActivity extends Activity implements OnClickListener {
 	protected void onStart() {
 		Log.i("START GAME", "STARTED");
 		super.onStart();
+
+		// Updates the scroll view according to the data stored in the shared
+		// preferences
+		SharedPreferences prefs = getSharedPreferences(SessionManager.PREFERENCES_NAME, Context.MODE_PRIVATE);
+		String s = prefs.getString(TAG_GAME_DATA, null);
+		if (s != null) updateScrollView(s);
+
+		new UpdateGames(username, this);
+		// Get all the local game data and start update async task
 	}
-	
+
 	protected void onDestroy() {
 		Log.i("START GAME", "DESTROYED");
 		super.onStart();
@@ -107,7 +115,7 @@ public class StartGameActivity extends Activity implements OnClickListener {
 		LinearLayout linear = (LinearLayout) findViewById(R.id.linear);
 		linear.removeAllViews();
 
-		new UpdateGames().execute();
+		new UpdateGames(username, this);
 	}
 
 	public void onClick(View v) {
@@ -123,127 +131,81 @@ public class StartGameActivity extends Activity implements OnClickListener {
 		}
 	}
 
-	class UpdateGames extends AsyncTask<String, String, String> {
+	private void updateScrollView(String result) {
+		LinearLayout linear = (LinearLayout) findViewById(R.id.linear);
+		// Removes everything that is inside the layout so that no
+		// duplicates can be shown
+		linear.removeAllViews();
 
-		int success;
-		ProgressDialog pDialog;
+		SessionManager session = new SessionManager(getApplicationContext());
+		String username = session.getUserDetails().get(SessionManager.KEY_USERNAME);
+
 		JSONObject json;
+		try {
+			json = new JSONObject(result);
 
-		protected void onPreExecute() {
-			super.onPreExecute();
+			for (int i = 0; i < json.getInt(TAG_NUMBER_OF_GAMES); i++) {
 
-		}
+				Button b = new Button(StartGameActivity.this);
 
-		protected String doInBackground(String... string) {
-			try {
-				List<NameValuePair> params = new ArrayList<NameValuePair>();
-				params.add(new BasicNameValuePair("username", username));
+				final JSONObject game = json.getJSONObject(TAG_GAME + i);
 
-				json = jsonParser.makeHttpRequest(URL_UPDATE_GAMES, "POST", params);
+				String text = "";
 
-				//Log.i("START GAME UPDATE - attempt", json.toString());
+				int me = -1;
+				int opponent = -1;
 
-				success = json.getInt(TAG_SUCCESS);
-
-				if (success == 1) {
-					Log.i("START GAME", "Games updated!");
-
-					numberOfGames = json.getInt(TAG_NUMBER_OF_GAMES);
-
-					return json.toString();
-				} else {
-					Log.i("START GAME", "Failed to create game!");
-					return json.getString(TAG_MESSAGE);
+				if (game.getString("username1").equalsIgnoreCase(username)) {
+					opponent = 2;
+					me = 1;
 				}
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
+				if (game.getString("username2").equalsIgnoreCase(username)) {
+					opponent = 1;
+					me = 2;
+				}
 
-			return null;
+				text = "Game with " + game.getString("username" + opponent);
+
+				// text += "\nYou : " + getGameScore(me, game) + " - " +
+				// getGameScore(opponent, game) + " : " +
+				// game.getString("username" + opponent);
+				text += "\nYou : " + game.getString("score" + me) + " - " + game.getString("score" + opponent) + " : " + game.getString("username" + opponent);
+
+				b.setText(text);
+
+				b.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						Intent i = new Intent(StartGameActivity.this, GameOverviewActivity.class);
+						i.putExtra("jsonString", game.toString());
+						startActivity(i);
+						finish();
+					}
+				});
+
+				linear.addView(b);
+
+			}
+		} catch (JSONException e) {
+			e.printStackTrace();
 		}
 
+		Log.i("UPDATED SCROLL VIEW", ":)");
+
+	}
+	
+	class UpdateGames extends com.gamesourcecode.misc.UpdateGames {
+
+		public UpdateGames(String username, Context context) {
+			super(username, context);
+		}
+		
 		@Override
 		protected void onPostExecute(String result) {
 			super.onPostExecute(result);
 
-			LinearLayout linear = (LinearLayout) findViewById(R.id.linear);
-			// Removes everything that is inside the layout so that no
-			// duplicates can be shown
-			linear.removeAllViews();	
-
-			SessionManager session = new SessionManager(getApplicationContext());
-
-			String username = session.getUserDetails().get(SessionManager.KEY_USERNAME);
-
-			for (int i = 0; i < numberOfGames; i++) {
-
-				Button b = new Button(StartGameActivity.this);
-
-				try {
-
-					final JSONObject game = json.getJSONObject(TAG_GAME + i);
-
-					String text = "";
-
-					int me = -1;
-					int opponent = -1;
-					
-					if (game.getString("username1").equalsIgnoreCase(username)) {
-						opponent = 2;
-						me = 1;
-					}
-					if (game.getString("username2").equalsIgnoreCase(username)) {
-						opponent = 1;
-						me = 2;
-					}
-
-					text = "Game with " + game.getString("username" + opponent);
-
-					//text += "\nYou : " + getGameScore(me, game) + " - " + getGameScore(opponent, game) + " : " + game.getString("username" + opponent);
-					text += "\nYou : " + game.getString("score" + me) + " - " + game.getString("score" + opponent) + " : " + game.getString("username" + opponent);
-
-					b.setText(text);
-
-					b.setOnClickListener(new OnClickListener() {
-						public void onClick(View v) {
-							Intent i = new Intent(StartGameActivity.this, GameOverviewActivity.class);
-							i.putExtra("jsonString", game.toString());
-							//Log.i("Should open game overview", game.toString());
-							startActivity(i);
-							finish();
-						}
-					});
-
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-
-				linear.addView(b);
-			}
-
-			//Log.i("START GAME UPDATE", result);
-
+			updateScrollView(result);
 		}
-
-		private int getGameScore(int p, JSONObject game) {
-			int numGames = 5;
-			int score = 0;
-			int s = 0;
-			boolean failed = false;
-
-			for (int i = 0; i < numGames; i++) {
-				try {
-					s = Integer.parseInt(game.getString("score" + p + "_" + i));
-					if (s != -1) score += s;
-
-				} catch (JSONException e) {
-					failed = true;
-				}
-			}
-
-			if (!failed) return score;
-			return -1;
-		}
+		
 	}
 
 	class StartGame extends AsyncTask<String, String, String> {
@@ -269,13 +231,10 @@ public class StartGameActivity extends Activity implements OnClickListener {
 
 				JSONObject json = jsonParser.makeHttpRequest(URL_CREATE_GAME, "POST", params);
 
-				//Log.i("START GAME NEW GAME- attempt", json.toString());
-
 				success = json.getInt(TAG_SUCCESS);
 
 				if (success == 1) {
-					//Log.i("START GAME", "Game successfully created!" + json.getString(TAG_MESSAGE) + "URL: " + URL_CREATE_GAME);
-					new UpdateGames().execute();
+					new UpdateGames(username, StartGameActivity.this);
 					return json.getString(TAG_MESSAGE);
 				} else {
 					Log.i("START GAME", "Failed to create game!");
@@ -285,16 +244,15 @@ public class StartGameActivity extends Activity implements OnClickListener {
 					return json.getString(TAG_MESSAGE);
 				}
 			} catch (JSONException e) {
-				e.printStackTrace();
+				return null;
 			}
-
-			return null;
 		}
 
-		protected void onPostExecute(String toastMessage) {
+		protected void onPostExecute(String result) {
 			pDialog.dismiss();
 
-			if (toastMessage != null) Toast.makeText(StartGameActivity.this, toastMessage, Toast.LENGTH_LONG).show();
+			if (result != null) Toast.makeText(StartGameActivity.this, result, Toast.LENGTH_LONG).show();
+			else Toast.makeText(StartGameActivity.this, "There was an error when trying to create the game!", Toast.LENGTH_LONG).show();
 
 		}
 

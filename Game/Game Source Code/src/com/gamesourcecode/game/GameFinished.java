@@ -71,7 +71,7 @@ public class GameFinished extends AsyncTask<Integer, String, String> {
 				Log.i("GAME", "Failed to submit score!");
 			}
 		} catch (JSONException e) {
-			e.printStackTrace();
+			redirect = true;
 		}
 
 		return null;
@@ -98,7 +98,6 @@ public class GameFinished extends AsyncTask<Integer, String, String> {
 				activity.startActivity(i);
 				activity.finish();
 			} catch (JSONException e) {
-				e.printStackTrace();
 			}
 		} else {
 			Intent i = new Intent(activity, HomeActivity.class);
