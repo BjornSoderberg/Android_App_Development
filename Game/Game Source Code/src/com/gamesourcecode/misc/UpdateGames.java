@@ -8,13 +8,17 @@ import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.gamesourcecode.startgame.StartGameActivity;
+
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 public class UpdateGames extends AsyncTask<String, String, String> {
 
@@ -50,11 +54,11 @@ public class UpdateGames extends AsyncTask<String, String, String> {
 			params.add(new BasicNameValuePair("username", username));
 
 			json = jsonParser.makeHttpRequest(URL_UPDATE_GAMES, "POST", params);
+			if(json == null) return null;
 
 			success = json.getInt(TAG_SUCCESS);
 
 			if (success == 1) {
-				Log.i("START GAME", "%%%%%%%%%%%%%%%%%% Games updated! %%%%%%%%%%%%%%%%%%%%%%%");
 				return json.toString();
 			} else {
 				Log.i("START GAME", "Failed to create game!");
@@ -65,7 +69,6 @@ public class UpdateGames extends AsyncTask<String, String, String> {
 		}
 	}
 
-	@Override
 	protected void onPostExecute(String result) {
 		super.onPostExecute(result);
 		

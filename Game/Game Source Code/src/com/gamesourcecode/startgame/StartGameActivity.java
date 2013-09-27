@@ -14,7 +14,8 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -192,20 +193,35 @@ public class StartGameActivity extends Activity implements OnClickListener {
 		Log.i("UPDATED SCROLL VIEW", ":)");
 
 	}
-	
+
 	class UpdateGames extends com.gamesourcecode.misc.UpdateGames {
 
 		public UpdateGames(String username, Context context) {
 			super(username, context);
 		}
-		
-		@Override
+
+		protected String doInBackground(String... string) {
+			if (!isNetworkAvailable()) return null;
+
+			return super.doInBackground(string);
+		}
+
 		protected void onPostExecute(String result) {
 			super.onPostExecute(result);
 
-			updateScrollView(result);
+			if (result == null) Toast.makeText(StartGameActivity.this, "Could Not Update Games", Toast.LENGTH_LONG).show();
+			else {
+				Toast.makeText(StartGameActivity.this, "Successfully Updated Games", Toast.LENGTH_LONG).show();
+				updateScrollView(result);
+			}
 		}
-		
+
+	}
+
+	private boolean isNetworkAvailable() {
+		ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+		return activeNetworkInfo != null;
 	}
 
 	class StartGame extends AsyncTask<String, String, String> {
@@ -251,8 +267,7 @@ public class StartGameActivity extends Activity implements OnClickListener {
 		protected void onPostExecute(String result) {
 			pDialog.dismiss();
 
-			if (result != null) Toast.makeText(StartGameActivity.this, result, Toast.LENGTH_LONG).show();
-			else Toast.makeText(StartGameActivity.this, "There was an error when trying to create the game!", Toast.LENGTH_LONG).show();
+			if(result == null || success == 0) Toast.makeText(StartGameActivity.this, "There was an error when trying to create the game!", Toast.LENGTH_LONG).show();
 
 		}
 

@@ -10,7 +10,10 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -67,10 +70,11 @@ public class GameOverviewActivity extends Activity implements OnClickListener {
 
 		play = (Button) findViewById(id.play);
 		play.setOnClickListener(this);
-		
+		if (!isNetworkAvailable()) play.setEnabled(false);
+
 		setTexts();
 	}
-	
+
 	private void getDataFromJSONString(String data) {
 		try {
 			json = new JSONObject(intent.getStringExtra("jsonString"));
@@ -110,15 +114,15 @@ public class GameOverviewActivity extends Activity implements OnClickListener {
 			onBackPressed();
 		}
 	}
-	
+
 	private void setTexts() {
 		play.setEnabled(playButtonEnabled());
 
 		title.setText(mName + " vs. " + oName);
-		
+
 		mScoreTV.setText(mScore + " wins");
 		oScoreTV.setText(oScore + " wins");
-		
+
 		if (gameState == mIndex) {
 			mGameScoreTV.setText("It is your turn!");
 			oGameScoreTV.setText("-");
@@ -154,7 +158,6 @@ public class GameOverviewActivity extends Activity implements OnClickListener {
 		// inits "score / waiting..." text views
 		mGameScoreTV = (TextView) findViewById(id.mGameScore);
 		oGameScoreTV = (TextView) findViewById(id.oGameScore);
-
 
 		prevScoreTV = (TextView) findViewById(id.prevScore);
 	}
@@ -204,8 +207,14 @@ public class GameOverviewActivity extends Activity implements OnClickListener {
 		Log.i("GAME OVERVIEW", "STOPPED");
 	}
 
+	private boolean isNetworkAvailable() {
+		ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+		return activeNetworkInfo != null;
+	}
+
 	class CheckGameState extends AsyncTask<String, String, String> {
-		int success;
+		int success = 0;
 		JSONParser jsonParser = new JSONParser();
 		ProgressDialog pDialog;
 
@@ -213,6 +222,8 @@ public class GameOverviewActivity extends Activity implements OnClickListener {
 		private final static String TAG_SUCCESS = "success";
 		private final static String TAG_MESSAGE = "message";
 		private final static String TAG_GAME = "game";
+
+		private JSONObject json;
 
 		protected void onPreExecute() {
 			super.onPreExecute();
@@ -225,48 +236,55 @@ public class GameOverviewActivity extends Activity implements OnClickListener {
 		}
 
 		protected String doInBackground(String... strings) {
+			if (!isNetworkAvailable()) return null;
+
 			try {
 				List<NameValuePair> params = new ArrayList<NameValuePair>();
 				params.add(new BasicNameValuePair("id", ID + ""));
 				params.add(new BasicNameValuePair("mIndex", mIndex + ""));
 
-				JSONObject json = jsonParser.makeHttpRequest(URL_CHECK_GAME_STATE, "POST", params);
+				try {
+					json = jsonParser.makeHttpRequest(URL_CHECK_GAME_STATE, "POST", params);
+				} catch (Exception e) {
+					return null;
+				}
+				if (json == null) return null;
 
 				success = json.getInt(TAG_SUCCESS);
-				
+				return json.getString(TAG_MESSAGE);
 			} catch (JSONException e) {
 				return e.getMessage();
 			}
-
-			return null;
 		}
 
 		protected void onPostExecute(String result) {
 			pDialog.dismiss();
-
-			Log.i("RESULT FROM CHECK GAME STATE", success + ": "+result + "");
 			
+			Log.i("fsafsafsagasgsasa", result + "");
+
+			if (result == null) Toast.makeText(GameOverviewActivity.this, "Could Not Start Game. There Was an Error When Connecting To The Server", Toast.LENGTH_LONG).show();
+
 			try {
-			if (success == 1) {
-				 Intent i = new Intent(GameOverviewActivity.this,
-				 GameActivity.class);
-				
-				 Log.i("GAME OVERVIEW", "Starting Game Activity");
-				
-				 i.putExtra("imageData", imageData);
-				 // 0 because it's the first game
-				 i.putExtra("round", 0);
-				 i.putExtra("id", ID);
-				 i.putExtra("mIndex", mIndex);
-				
-				 startActivity(i);
-				 finish();
-			// This is true if it is not the player's turn and the data is getting updated
-			} else if (success == 2){
-				getDataFromJSONString(json.getString(TAG_GAME));
-				setTexts();
-				new UpdateGames(mName, GameOverviewActivity.this);
-			}
+				if (success == 1) {
+					Intent i = new Intent(GameOverviewActivity.this, GameActivity.class);
+
+					Log.i("GAME OVERVIEW", "Starting Game Activity");
+
+					i.putExtra("imageData", imageData);
+					// 0 because it's the first game
+					i.putExtra("round", 0);
+					i.putExtra("id", ID);
+					i.putExtra("mIndex", mIndex);
+
+					startActivity(i);
+					finish();
+					// This is true if it is not the player's turn and the data
+					// is getting updated
+				} else if (success == 2) {
+					getDataFromJSONString(json.getString(TAG_GAME));
+					setTexts();
+					new UpdateGames(mName, GameOverviewActivity.this);
+				}
 			} catch (JSONException e) {
 
 			}

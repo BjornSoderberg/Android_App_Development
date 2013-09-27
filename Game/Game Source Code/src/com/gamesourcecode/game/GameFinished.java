@@ -55,11 +55,9 @@ public class GameFinished extends AsyncTask<Integer, String, String> {
 			params.add(new BasicNameValuePair("index", Integer.toString(mIndex)));
 			params.add(new BasicNameValuePair("score", Integer.toString((int) score)));
 
-			Log.i("GAME - Params ", params.toString());
+			Log.i("GAME FINISHED - Params ", params.toString());
 
 			json = jsonParser.makeHttpRequest(URL_GAME_FINISHED, "POST", params);
-
-			Log.i("GAME - attempt", json.toString());
 
 			success = json.getInt(TAG_SUCCESS);
 
@@ -80,7 +78,12 @@ public class GameFinished extends AsyncTask<Integer, String, String> {
 	protected void onPostExecute(String result) {
 		super.onPostExecute(result);
 
-		Log.i("GAME - UPDATED FINISHED GAME", result + "");
+		try {
+			Log.i("GAME Fin - UPDATED FINISHED GAME", json.getString("message") + "");
+		} catch (JSONException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		
 		if (!redirect) {
 			activity = null;

@@ -8,6 +8,9 @@
 		if($mIndex == 1) $oIndex = 2;
 		else $oIndex = 1;
 		
+		if(isset($_POST['score'])) $score = $_POST['score'];
+		else $score = 0;
+		
 		$query = "
 			SELECT *
 			FROM games
@@ -29,9 +32,20 @@
 		
 		$row = $stmt->fetch();
 		
+		if(!$row) {
+			$response["success"] = 0;
+			$response["message"] = "No data fetched";
+            die(json_encode($response)); 
+		}
 		
 		// Update
 		$game_state = $row['game_state'];
+		$play_time = $row['play_time'.$mIndex];
+		
+		// if it has passed more than 6 minutes since the game was started, the score is set to 0
+		if(strtotime($play_time) + 6 * 60 < strtotime("now")) {
+			$score = 0;
+		}
 		
 		if($game_state != $mIndex) {
 			$response["success"] = 0;
@@ -47,12 +61,13 @@
 				UPDATE games
 				SET game_score" . $mIndex . " = :game_score".$mIndex.",
 					game_state = :game_state,
-					last_play_time = CURRENT_TIMESTAMP
+					last_play_time = CURRENT_TIMESTAMP,
+					play_time".$mIndex." = 0
 				WHERE id = :id
 			";
 		
 			$query_params = array(
-				':game_score'.$mIndex => $_POST['score'],
+				':game_score'.$mIndex => $score,
 				':game_state' => $game_state,
 				':id' => $_POST['id']
 			);
@@ -86,7 +101,8 @@
 					game_score2 = -1,
 					game_state = :game_state,
 					images = :images,
-					last_play_time = CURRENT_TIMESTAMP
+					last_play_time = CURRENT_TIMESTAMP,
+					play_time".$mIndex." = 0
 					".$s."
 				WHERE id = :id
 			";
